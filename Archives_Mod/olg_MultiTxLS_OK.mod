@@ -1,0 +1,223 @@
+
+
+@#define NT=40
+@#define NTr=20
+@#define NLS=NT+NTr 
+
+
+%k=[       0    0.06    0.12    0.19    0.26    0.33     0.4    0.47    0.54    0.61    0.68    0.75    0.82    0.89    0.96    1.03     1.1    1.17    1.24    1.31    1.38    1.45    1.52     1.6    1.68    1.76    1.84    1.92       2    2.07
+%    2.14    2.21    2.28    2.35    2.42    2.49    2.56    2.63     2.7    2.77    2.83     2.8    2.76    2.71    2.65    2.59    2.52    2.44    2.35    2.24    2.12    1.99    1.84    1.68     1.5     1.3    1.08    0.84    0.58    0.29];
+
+%lamda = [999  434.03  108.51   43.28   23.11   14.35    9.77    7.07    5.36    4.20    3.38    2.78    2.32    1.97    1.70    1.47    1.29    1.14    1.02    0.91    0.82    0.74    0.68    0.61    0.55    0.50    0.46    0.42    0.39    0.36
+%    0.34    0.32    0.30    0.28    0.27    0.25    0.24    0.23    0.21    0.20    0.20    0.20    0.21    0.21    0.22    0.23    0.25    0.26    0.28    0.31    0.35    0.39    0.46    0.55    0.69    0.92    1.34    2.21    4.64   18.58];
+
+k = .01*ones(2,30);
+lamda = .01*ones(2,30);
+
+
+//1) VARIABLES************************************************************
+
+var c y r w kbar nbar contr;
+
+@#for i in 1:NLS
+    var ki@{i};           
+@#endfor
+
+@#for i in 1:NT
+    var lab_@{i};     
+@#endfor
+
+@#for i in 1:NLS
+    var c_@{i};           
+@#endfor
+
+@#for i in 1:NLS
+    var lamda@{i};     
+@#endfor
+
+@#for i in NT+1:NLS
+    var pen_@{i};      
+@#endfor
+
+var check;
+//2) EXOGENOUS VARIABLES***************************************************
+
+varexo z tau;
+
+
+//3)PARAMETERS*************************************************************
+
+parameters alp, beta, delta, Tr, T, LS, gam, gam1; 
+gam= 2; // or value of 2
+gam1=.07;
+alp=0.3;  
+beta=0.97; 
+delta=.02;
+%rep=0.1;    
+T=40;    
+Tr=20;      
+LS=T+Tr;    
+
+
+//4) MODEL EQUATION*******************************************************
+model;
+
+@#for i in 1:NLS
+    lamda@{i} =  1/c_@{i};
+@#endfor
+
+@#for i in 1:NLS-1
+    lamda@{i} = beta*lamda@{i+1}(+1) * (1+r(+1));
+@#endfor
+
+@#for i in 1:NT
+gam1*(1-lab_@{i})^(-gam) = lamda@{i}*(1-tau)*w ; 
+@#endfor
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+ki@{1}=0; 
+kbar = (
+@#for i in 1:NLS
+ 
+    + ki@{i}                             
+
+@#endfor
+);
+
+
+%y = c + kbar - (1-delta)*kbar(-1);   
+check=y - (c + kbar - (1-delta)*kbar(-1));
+
+
+y = exp(z) * kbar(-1)^alp * nbar^(1-alp);     
+
+c = (                        
+@#for i in 1:NLS
+    + c_@{i}                            
+@#endfor
+);
+
+nbar = (                        
+@#for i in 1:NT
+    + lab_@{i}                       
+@#endfor
+);
+
+
+
+w =  exp(z)*(1-alp) * (kbar(-1)^alp) * (nbar^-alp);        
+r =  exp(z)*alp * kbar(-1)^(alp-1) * nbar^(1-alp) - delta;  
+
+
+/*
+@#for i in NT+1:NLS
+    pen_@{i}  =  rep * (1-tau) * w(@{NT-i}) * lab_@{NT}(@{NT-i}) ;     
+@#endfor
+*/
+
+
+contr = (                        
+@#for i in 1:NT
+    + tau * w * lab_@{i}
+@#endfor
+);
+
+@#for i in NT+1:NLS
+    pen_@{i}  =  contr/Tr ;      
+@#endfor
+
+/*
+retire = (                        
+@#for i in NT+1:NLS
+    + pen_@{i}
+@#endfor
+);
+
+retire=contr;
+*/
+
+//z = rho * z(-1) + eps;                                   
+
+
+
+@#for i in 1:NLS 
+
+    @#if i <= NT
+        
+        c_@{i} = (1 + r) * ki@{i}(-1) + (1-tau)*w*lab_@{i} - ki@{i+1};  
+    @#else
+
+        @#if i != NLS
+            //note the -1 rather than +1 WARNING 
+            c_@{i} = (1 + r) * ki@{i}(-1) + pen_@{i} - ki@{i+1};               
+
+        @#else
+            
+            c_@{i} = (1 + r) * ki@{i}(-1) + pen_@{i};                                      
+
+        @#endif
+
+    @#endif
+
+@#endfor  
+
+
+
+end; 
+
+
+
+
+//5) INITIALISATION WITH STEADY STATE VALUES*******************************
+initval; 
+
+
+@#for i in 1:NLS
+    ki@{i} = 5;               
+    lamda@{i} =1;     
+    c_@{i}=1;
+@#endfor
+
+ki1 = 0;
+@#for i in 2:NLS
+    ki@{i} = 5;  
+@#endfor
+
+
+@#for i in 1:NT
+    lab_@{i}=.7;
+@#endfor
+
+@#for i in NT+1:NLS
+    pen_@{i}=.2;
+@#endfor
+c      	=	 60;
+y      	=	 70;
+r      	=	 0.02;
+w      	=	 1.6;
+kbar   	=	 500;
+nbar    =   1.75;
+contr=4;
+z = 0;
+tau=0.1;
+end;
+steady;
+%check;
+
+
+endval;
+z   =   .02;
+%tau = .2;
+end;
+steady;
+%check;
+%resid;
+
+
+perfect_foresight_setup(periods=100);
+
+perfect_foresight_solver;
+
+run plotsim.m
+

@@ -1,0 +1,14 @@
+04-Feb-2017 19:37:37
+
+Second moments from   500 simulations. HP-Filter=1600. Bounds were not checked.
+Cubic policy functions were used.
+
+Output        1.29   1.00   1.00   0.70
+Consumption   0.46   0.36   0.97   0.74
+Hours         0.59   0.46   0.99   0.69
+
+Column 1: Variable
+Column 2: Standard Deviation
+Column 3: Standard deviation relative to variable Output
+Column 4: Cross correlation with variable Output
+Column 5: First order autocorrelation

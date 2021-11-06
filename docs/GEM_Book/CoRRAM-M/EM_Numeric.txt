@@ -1,0 +1,14 @@
+17-Feb-2017 10:27:52
+
+Second moments from   500 valid simulations. HP-Filter=1600
+Quadratic policy functions were used.
+
+Output        1.19   1.00   1.00   0.70
+Consumption   0.56   0.47   0.99   0.71
+Hours         0.45   0.38   0.99   0.69
+
+Column 1: Variable
+Column 2: Standard Deviation
+Column 3: Standard deviation relative to variable Output
+Column 4: Cross correlation with variable Output
+Column 5: First order autocorrelation

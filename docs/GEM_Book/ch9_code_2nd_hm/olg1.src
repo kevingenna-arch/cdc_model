@@ -1,0 +1,743 @@
+@ -------------------------------- OLG.src ------------------------------------
+
+  File with Gauss procedures used in olg_mod?.g.
+
+  These procedures are from Heer/Maussner, Ch1\Toolbox.src.
+
+  Use #include olg.src in the file where you want to use
+  these procedures.
+
+  Includes subroutines are:
+
+  - FixpMN
+  - FixvMN (and the procedures used by it: LSolve, CheckBounds2, GetStep2)
+  - GraphSettings
+  - SolveLA (and the procedures use by it: SchurO, InterChange, L2Norm, Givens)
+  - HPFilter
+  - CDJac
+
+------------------------------------------------------------------------------ @
+
+/* FixpMN: Computes the zero of function using a modified Newton method
+**
+** Useage: x=FixpMN(x0,bounds,&f)
+**
+**         where:      x: the solution to f(x)=0 in the intervall [a,b],
+**                    x0: the starting value of the algorithm
+**                bounds: a 1x2 vector with bounds[1]=a and bounds[2]=b,
+**                    &f: a pointer to the procedure that computes and
+**                        returns f(x) t
+**
+** Remarks:  1. tol=1.e-10 is the default precision, i.e. the procedure stops
+**              if abs(f(x))<tol.
+**
+**           2. if the procedure is not able to converge in maxit=5000
+**              iterations it stops, returns the current value of x 
+**              and prints an error message to the default output window.                         
+**
+**           3. The procedure uses the GAUSS routine GRADP to
+**              compute the slope of f at x.
+**                  
+*/
+
+
+proc(1)=FixpMN(x0,bounds,&f);
+
+   local x1,x2,df,dx,tol,maxit,step,itn, f: proc;
+
+    tol=1.e-10;
+  maxit=5000;
+  itn=1;
+   x1=x0;
+   do until (abs(f(x1))<tol) or (itn>maxit);
+      df=GRADP(&f,x1);
+      dx=-f(x1)/df;
+      x2=x1+dx;
+    step=1;
+    do while (x2<bounds[1] or x2>bounds[2] or f(x2)==miss(1,1));
+       step=step/2;
+         x2=x1+step*dx;
+    endo;
+    itn=itn+1;     
+    x1=x2;
+   endo;
+   if itn>maxit;
+      ?"Maximum number of iterations exceeded.";
+      ?"Returned solution may be missleading. Press any key...";
+      wait;
+   endif;
+   retp(x1);
+
+endp;
+
+
+/* FixVMN: Solves a system of non-linear equations using a modified Newton Method
+**
+** Usage:   {fx,x}=FixVMN(x0,bounds,&F)
+**
+**  Input:  &F  := Pointer the vector valued function F(x), whose
+**                 zero, F(x1)=0, is to be computed. 
+**
+**          x0  := k times 1 vector of starting values
+** 
+**
+**      bounds  := k times 2 matrix, whose first column holds the lower and whose
+**                                   second column holds the upper bounds on x
+**
+**  Output: fx  := k times 1 vector, the value of f at the solution x1
+**
+**          x1  := k times 1 vector, the approximate solution to F(x1)=0
+*/
+
+/* Global controll variables use by FixvMN */
+
+declare matrix _MNR_Global != 0;  @ Do not use GetStep in FixvMN             @
+declare matrix _MNR_Print  != 0;  @ FixvMN print no messages to the screen   @
+declare matrix _MNR_QR     != 0;  @ do not use QR factorization for solution @
+
+proc(2)=FixVMN(x0,bounds,&f);
+
+  local x1, x2, dx, df, dg, crit, crit1, crit2, stopc, itn, step1, step2, maxit;
+  local f:proc;
+
+  /* Initialize */
+    maxit=5000;     @ stop after 5000 Iterations @
+    stopc=1e-8;     @ stopping criterium @
+       x1=x0;
+      itn=1;     
+
+  /* Start Iterations */
+  itn=1;
+  crit=1;crit1=1;crit2=1;
+  if _MNR_Print; cls; endif; @ clear screen if output is printed to the screen @
+
+  do until ((crit<stopc) or (itn > maxit));      @ start iterations @
+      if _MNR_Print;
+         locate 1,2;
+         ?"Step No: " ftos(itn,"*.*lf",5,0) "Convergence criterion:" crit;
+         if _MNR_Global;
+           locate 2,2;
+           ?"Minimization criterion: "  crit1 " crit1<crit2: " (crit1<crit2);
+         endif;
+      endif;
+        df=gradp(&F,x1);if ismiss(df);?"Not able to compute gradient"; stop; endif;
+      if _MNR_Global;  dg=F(x1)'df; endif;
+
+     if _MNR_QR;
+        dx=LSolve(df,-f(x1)); @ use the QR-factorization @
+        if ismiss(dx); ?"Not able to solve for dx"; stop; endif;
+     else;
+        dx=-inv(df)*F(x1);  
+     endif;    
+        x2=x1+dx;        
+      step1=CheckBounds2(x1,dx,bounds); @ scale down by step if array bounds are exceeded @
+      
+      if _MNR_Print;
+       locate 3,2;
+       ?"Step1= " step1;@wait;@
+       
+      endif;
+      if step1<1.0e-16;
+           ?"Not able to find x within admissible bounds";
+           ?"Results may be missleading"; 
+           ?"Press any key to continue.";
+           wait;
+           retp(F(x1),x1);
+      endif;
+         dx=step1*dx;
+      if _MNR_Global;  step2=GetStep2(x1,dx,dg,&f); else; step2=step1; endif;
+      
+      if _MNR_Print;
+         locate 4,2;
+         ?"Step2= " step2;@wait;@
+      endif;
+      if step2<0.0;
+            ?"Stepsize cannot be further reduced."; 
+            ?"Algorythm may stuck at a local minimum";
+            ?"Results may be misleading";
+            ?"Press any key to continue";
+            wait;
+            retp(f(x1),x1);
+       endif;               
+       x2=x1+step2*dx;
+       crit=maxc(abs(F(x2)));
+       if _MNR_Global;     crit2=crit1;   crit1=(F(x2)'F(x2))/2;    endif;
+       x1=x2;
+      itn=itn+1;
+   endo;
+   if itn >= maxit;
+        ?"Maximum number of iterations exceeded! Returned solution may be missleading";
+        ?"Press any key to continue";wait;
+   endif;
+retp(f(x1), x1);
+
+endp;
+
+
+/* CheckBounds2:
+**
+** Purpose:  Finds smallest s so that x+s*dx is within bounds 
+**
+** Usage:    s=CheckBounds2(x,dx,bounds)
+**
+** Input:  x  := k times 1 vector, the given value of x0
+**        dx  := k times 1 vector, the Newton step from x0 to x1
+**     bounds := k times 2 matrix, the first (second) colum store the lower (upper) bounds of x
+**
+** Output: s  := scalar
+*/
+
+proc(1)=CheckBounds2(x,dx,bounds);
+
+  local l1, l2, s1, s2;
+ 
+  l1=(bounds[.,1]-x)./dx; s1=minc(selif(l1,l1.>0));
+  l2=(bounds[.,2]-x)./dx; s2=minc(selif(l2,l2.>0));  
+  s1=minc(0.98*s1|0.98*s2|1);
+  
+retp(s1);
+
+endp;
+
+
+/* LSolve:
+**
+**  Purpose: Solve a system of linear equations Ax=b using the QR-decomposition
+**
+**  Usage:  x=LSolve(A,b)
+**
+**  Input:  A: square matrix of dimension n
+**          b: vector of dimension n
+**
+**  Output: x: vector of dimension n
+*/   
+
+proc(1)=LSolve(a,b);
+
+ local r, d, q;
+ {q,r}=qqr(a); 
+retp(qrsol(q'b,(q'q)*r));
+
+endp;
+
+/* GetStep2:
+**
+** Purpose:  Find the step size s so that the Newton-Raphson algorithm
+**           always moves in the direction of a (local) minimum of (1/2)(f(x)'f(x))
+**
+**
+** Usage:    s=GetStep2(x0,dx0,dg,&f);
+**
+** Input:    x0 := n times 1 vector, the initial point
+**           dx0:= n times 1 vector, the Newton direction
+**           dg := 1 times n vector, the gradient of (1/2)(f'f) at x_0
+**           &f := pointer to the function whose zero x solves the system of equations
+**
+** Output:   s  := admissible stepsize
+*/
+
+      
+proc(1)=GetStep2(x0,dx0,dg,&f);
+
+  local s, x1, s1, s2, smult, smin, smax, stol, tol, g0, g1, g2, amat, bvec, ab, dgdx;
+  local f:proc;
+
+
+  /* Fixed parameters of the algorithm */
+  smult=1.0e-4; smin=0.1; smax=0.5; stol=1.e-9;
+  
+  /* Initialize */
+  s1=1.0;
+  amat=zeros(2,2); bvec=zeros(2,1);
+   g0=(1/2)*(f(x0)'f(x0));
+ dgdx=dg*dx0;                        @ dg(x0)*dx0                          @
+ g1=(1/2)*(f(x0+dx0)'f(x0+dx0));
+
+
+ /* Try the full Newton step s=1 */
+ if g1 <= g0 + smult*dgdx;
+    retp(s1);
+ else;
+    s=-dgdx/(2*(g1-g0-dgdx));
+    if s<smin; s=smin; endif;
+    if s>smax; s=smax; endif;
+    x1=x0+s*dx0;
+    g2=(1/2)*(f(x1)'f(x1));
+ endif;
+ s2=s;
+
+ /* Reduce s2 further unless g2 < g0 + s2*smult*dgdx */
+ do while (g2 > (g0 + smult*s2*dgdx) );
+
+    amat[1,1]=1/(s2^2);  amat[1,2]=-1/(s1^2); amat[2,1]=-s1/(s2^2); amat[2,2]=s2/(s1^2);
+    bvec[1]=g2-s2*dgdx-g0; bvec[2]=g1-s1*dgdx-g0;
+    ab=(amat*bvec)/(s2-s1);
+    s=(-ab[2] + sqrt((ab[2]^2) - 3*ab[1]*dgdx))/(3*ab[1]);
+
+    if s < s2*smin; s=s2*smin; endif;
+    if s > s2*smax; s=s2*smax; endif;
+
+    tol=sqrt((s*dx0)'(s*dx0))/(1+sqrt(x0'x0));
+    if tol < stol; retp(-1.0); endif;
+    s1=s2;
+    s2=s;
+    g1=g2;
+    x1=x0+s2*dx0;
+    g2=(1/2)*(f(x1)'f(x1));
+
+ endo;
+
+retp(s2);
+
+endp;
+      
+/* GraphSettings: Changes Gauss' default initialization of graphic routines
+**
+** Usage: GraphSettings;
+*/
+  
+proc(0)=GraphSettings;
+
+ external matrix  _pltype, _ptitlht, _pnumht,
+         _paxht, _pmcolor, _plwidth, _pcsel, _pdate;
+ external proc GraphSet;
+ GraphSet;
+   _pdate="";        @ do not plot date               @
+  _pltype=6;         @ solid lines only               @
+ _plwidth=4;         @ line width always 4            @
+   _paxht=0.15;      @ size of axis labels            @        
+  _pnumht=0.15;      @ size of axis numbering         @
+ _ptitlht=0.20;      @ size of titles                 @
+ _pmcolor={0,        @ color of axis: black           @
+           0,        @ color of axis' numbers         @
+           0,        @ color of x-axis label          @
+           0,        @ color of y-axis label          @
+           0,        @ color of z-axis label          @
+           0,        @ color of title                 @
+           0,        @ color of boxes                 @
+           0,        @ color of date and author       @
+           15};      @ background color:        white @
+   _pcsel={0,        @ color of first line: black     @
+           1,        @ color of second line: dark blue@
+           2,        @ color of third line: green     @
+           4,        @ color of fourth line: red      @
+           3,        @ color of fifth line: light blue@
+          10,        @ color of sixth line: light green@
+          8};        @ color of seventh line: dark grey@
+          
+retp;
+endp;           
+
+
+/* SolveLA:
+**
+** usage: {Lxx,Lxz,Llx,Llz,Lux,Luz}=SolveLA(Cu,Cxl,Cz,Dxl,Fxl,Du,Fu,Dz,Fz,rho,nx)
+**
+** Input:   the matrices from (2.36), where Pi=rho, and nx=n(x)
+** Output:  the policy matrices explained in Section 2.2.2
+*/
+
+proc (6)=SolveLA(Cu,Cxl,Cz,Dxl,Fxl,Du,Fu,Dz,Fz,rho,nx);
+
+   local Lxx,Lxz,Llx,Llz,Lux,Luz,Cui,temp,w,r,v,vi,t,
+         toli,lambda,q1,q2,phi,i,j,tll,vlxi,
+         vlli,vllii,itest,nl,nz;
+
+   clear Lxx,Lxz,Llx,Llz,Lux,Luz;
+
+    /* Tolerence in case of numerical imprecision producing
+    ** complex policy matrices   */
+    toli=1e-10;
+
+    /* get dimension */
+ 
+   nl=cols(Dxl)-nx;
+   nz=cols(Cz);
+
+/* Compute the dynamic equation
+**
+** E_t(x[t+1]|l[t+1]) = w*(x[t]|l[t]) + r*Et(z[t+1]) + q*z[t]
+**
+*/
+
+if ((rows(Cu)==1) and (cols(Cu)==1));
+   if (Cu==0);
+       Cui=0;
+   else;
+       Cui=1/Cu;
+   endif;
+else;
+   Cui=inv(Cu);
+endif;
+
+temp=inv(Dxl-Du*Cui*Cxl);
+
+w=-temp*(Fxl-Fu*Cui*Cxl);
+r=temp*( (Dz+Du*Cui*Cz)*Rho + (Fz+Fu*Cui*Cz) );
+
+/*  Schur decomposition of w, test of solvability, and separation of variables */
+
+{t,v}=SchurO(w);
+?"Eigenvalues of W:";
+lambda=diag(t);
+?lambda[sortind(abs(lambda))];
+
+lambda=abs(lambda);
+if sumc(abs(lambda[1:nx]) .> 1)>0;
+  ?"Not all of the " ftos(nx,"%*.*lf",2,0)
+   " eigenvalues are within the unit circle!";
+  ?lambda;?"";
+  ?"The program terminates! Press any key!";wait;
+  retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endif;
+
+if sumc( abs(lambda[nx+1:rows(lambda)]) .< 1) > 0;
+  ?"Not all of the " ftos(nl,"%*.*lf",2,0)
+   " eigenvalues are out of the unit circle!"; 
+  ?lambda;?"";
+  ?"The program terminates. Press any key!";wait;
+  retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endif;
+
+vi=v';
+vlxi=vi[nx+1:rows(vi),1:nx];
+vlli=vi[nx+1:rows(vi),nx+1:cols(vi)];
+vllii=inv(vlli);
+
+temp=vi*r;
+q1=temp[1:nx,.];
+q2=temp[nx+1:rows(temp),.];
+
+/* Solution for lambda */
+phi=zeros(nl,nz);
+tll=t[nx+1:rows(t),nx+1:cols(t)];
+i=nl;
+do while i>0;
+   j=i+1;
+   temp=zeros(1,nz);
+   do until j>nl;
+      temp=temp+tll[i,j]*phi[j,.];
+         j=j+1;
+   endo;
+   phi[i,.]=(q2[i,.]+temp)*inv((Rho-tll[i,i]*eye(nz)));
+          i=i-1;
+endo;
+Llx=-vllii*vlxi;
+Llz=vllii*phi;
+Lxx=v[1:nx,1:nx]*t[1:nx,1:nx]*inv(v[1:nx,1:nx]);
+Lxz=w[1:nx,nx+1:cols(w)]*Llz+r[1:nx,.];
+Lux=Cui*Cxl*(eye(nx)|Llx);
+Luz=Cui*Cxl*(zeros(nx,nz)|Llz)+Cui*Cz;
+
+/* Test for complex coefficients */
+itest=maxc(maxc(imag(Llx)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Llx";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Llx=real(Llx);
+endif;
+
+itest=maxc(maxc(imag(Llz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Llz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Llz=real(Llz);
+endif;
+
+itest=maxc(maxc(imag(Lxx)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lxx";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lxx=real(Lxx);
+endif;
+
+itest=maxc(maxc(imag(Lxz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lxz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lxz=real(Lxz);
+endif;
+
+itest=maxc(maxc(imag(Lux)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lux";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lux=real(Lux);
+endif;
+
+itest=maxc(maxc(imag(Luz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Luz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Luz=real(Luz);
+endif;
+
+
+retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endp;
+
+
+/* SchurO:
+**
+** Usage: {S,T}=SchurO(W)
+**
+** Purpose: Compute the Schur factorization of a real matrix W
+**
+** Input: W square matrix of size n(x) times n(x)
+**
+** Output: S upper triangular matrix with eigenvalues of W on the main diagonal. The eigenvalues
+**         appear in ascending order.
+**
+**         T transformation matrix that puts W into Schur form: T^(-1}WT=S.
+*/
+
+proc(2)=SchurO(W);
+
+   local T, S, i, n, S1;
+
+  if rows(W) == 1;
+    S=W;
+    T=1;
+  else;
+
+/* Step 1: Get the real Schur factorization */
+{S,T}=schur(W);
+
+/* Step 2: Get the possibly complex Schur factorization */
+
+{S,T}=schtoc(S,T);
+
+/* Step 3:  Sort diagonal elements of T in ascending order  */
+n=rows(S);
+i=2;
+
+do until i > n;
+   if abs(S[i-1,i-1]) > abs(S[i,i]);
+      {S,T}=InterChange(S,T,i-1);
+      if i > 2; i=i-2; endif;
+   endif;
+   i=i+1;
+endo;
+
+endif;
+
+/* Normalize T */
+T=L2Norm(T);
+retp(S,T);
+endp;
+
+/* InterChange:
+**
+** Usage: {S,T}=Interchange(S,T,k)
+**
+** Purpose: Interchange two neighboring elements on the main diagonal of
+**          the Schur matrix S and modify the transformation matrix T accordingly.
+** 
+** Input:   S Schur matrix
+**          T tranformation matrix
+**          k index of the element being interchanged with element k+1
+**
+** Remarks: The computations are based on algorithm 7.6.1 in the book of Golub and van Loan (1996), p. 365f.
+**          See also Appendix 1 of Heer and Maussner.
+*/
+
+proc(2)=InterChange(S,T,k);
+
+   local n, c, s1, gmat;
+
+   n=cols(S);
+
+   { c,s1 } = givens(S[k,k+1],S[k+1,k+1]-S[k,k]);
+
+   gmat=(c~s1)|(-s1'~c'); 
+
+   S[k:k+1,k:n]  =gmat'S[k:k+1,k:n];
+   S[1:k+1,k:k+1]=S[1:k+1,k:k+1]*gmat;   
+   T[1:n,k:k+1]=T[1:n,k:k+1]*gmat;
+
+retp(S,T);
+endp;
+
+/* Givens:
+**
+** Usage {c,s}=Givens(a,b);
+**
+** Purpose: Get the coefficients of a Givens rotation that interchanges
+**          the element a[i,i] with the element a[i+1,i+1] of a (complex) matrix A.
+**
+**
+** Input: a=a[i,i+1]
+**        b=a[i+1,i+1]-a[i,i]
+**
+** Output: c and s as defined by algorithm 5.1.3 in the book by Golub and van Loan (1996), p. 216.
+*/
+
+
+proc(2) = givens(a,b); 
+
+   local tau, s, c;
+
+if b == 0;
+
+   c=1; s=0;
+
+elseif abs(b) > abs(a);
+   tau=-a/b; s=1/(sqrt(1+tau*tau')); c=s'*tau;
+
+else;
+   tau=-b/a; c=1/(sqrt(1+tau*tau')); s=c*tau;s=s';
+
+endif;
+
+retp(c,s);
+endp;
+
+
+/* L2Norm:
+**
+** usage: y=L2Norm(x)
+**
+** purpose: normalizes the vector x so that it has unit length
+**
+** input:  x, column vector
+** output: y, column vector with unit length
+*/
+
+proc(1)=L2Norm(x);
+
+  local i, n, norm;
+
+  n=cols(x);
+  i=1;
+  do until i>n;
+     norm=sqrt(sumc(abs(x[.,i])^2));
+     x[.,i]=x[.,i]/norm;
+     i=i+1;
+  endo;
+
+retp(x);
+
+endp;
+
+/* HPFilter: returns the cyclical component of a time series x
+**           as defined by the Hodrick-Prescott filter.
+**
+** usage: c=HPFilter(x,mu);
+**
+** Input:   x : nobs x 1, vector with observations
+**
+**         mu : scalar, the filter weight (i.e. mu=1600 for quarterly data)
+**
+** Output   c : nobs x 1, vector, the cyclical component of x
+*/
+
+proc(1)=HPFilter(x,mu);
+
+local m, i, nobs;
+
+  nobs=rows(x);
+  
+  m=zeros(nobs,3);
+
+  /* Belegen der Matrix */
+  i=1;
+  do until i>nobs;
+   m[i,1]=mu;
+   m[i,2]=-4*mu;
+   m[i,3]=1+6*mu;
+        i=i+1;
+  endo;
+  m[1,1]=0;         m[2,1]=0;
+  m[1,2]=0;         m[2,2]=-2*mu;     m[nobs,2]=m[2,2];
+  m[1,3]=1+mu;      m[2,3]=1+5*mu;
+  m[nobs,3]=m[1,3]; m[nobs-1,3]=m[2,3];
+ 
+ retp(x-bandsolpd(x,m));  @ The command bandlospd provides the solution of equation (A.4.2) @
+
+endp;   
+
+/* CDJac
+**
+** usage: Jac=CDJac(&f,x0,n)
+**
+**
+** purpose: computes a central difference approximation of the Jacobian
+**          matrix of a system of n non-linear functions y_i=f^i(x), where
+**          x is a column vector of dimension m.
+**
+** input:  &f: pointer to the routine that returns the m-vector f(x)
+**         x0: m vector x0, the point at which the derivatives are to be evaluated
+**         n : the size of the vector f(x)
+**
+** output: Jac: n by m matrix of parital derivatives
+**
+** algorithm: based on (A.2.8) in Heer and Maussner, see also Dennis and Schnabel (1983), 
+**            Algorithm A5.6.4.
+*/
+
+proc(1)=CDJac(&f,x0,n);
+
+  local eps, i, j, m, h, df, f1, f2, x1, x2, temp, Macheps;
+  local f:proc;
+  
+  Macheps=1e-15;
+  m=rows(x0);
+  df=zeros(n,m);
+  eps=MachEps^(1/3);
+  x1=x0;
+  x2=x0;
+  i=1;
+
+  do until i>m;
+     if x0[i]<0;
+        h=-eps*maxc(abs(x0[i])|1.0);
+     else;
+        h=eps*maxc(abs(x0[i])|1.0);
+    endif;
+    temp=x0[i];
+    x1[i]=temp+h;
+    x2[i]=temp-h;
+        h=x1[i]-temp; @ Trick to increase precision slightly, see Dennis and Schnabel (1983), p. 99 @
+    f1=f(x1);
+    f2=f(x2);
+    j=1;
+    do until j>n;
+       df[j,i]=(f1[j]-f2[j])/(2*h);
+       j=j+1;
+    endo;
+    x1[i]=x0[i];
+    x2[i]=x0[i];
+    i=i+1;
+ endo;
+ retp(df);
+
+endp;
+
+
+/* procedue for the discrete approximation of an AR(1) process */
+/* input: n - scalar, number of values for the simulaton
+          x0 - scalar, initial value, 1<x0<NN
+          a - autoregression coefficient
+          s2 - scalar, variance of the disturbance epsilon
+          NN - scalar, number of grid points
+          m - scalar, spread parameter, e.g. m=3
+   output: (n,1) vector
+*/

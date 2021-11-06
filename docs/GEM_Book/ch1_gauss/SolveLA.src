@@ -1,0 +1,553 @@
+@ --------------------------- SolveLA.src --------------------------
+
+  Alfred Maußner
+  15 September 2006
+  Last modification: 07 October 2007
+
+  This is new version of the SolveLA.src file.
+  It contains the old version of SolveLA, which
+  uses Givens rotations to sort the Schur matrix.
+
+  It also contains SolveLA2, which uses the Fortran
+  function schur_f to get the ordered Schur matrix
+  and the respective transformation matrix. if w is
+  large this should speed up computation considerably.
+
+  List of procedures:
+
+    SolveLA
+    SolveLA2
+    MySchur
+    SchurS
+    L2Norm
+    InterChange
+    Givens
+
+-------------------------------------------------------------- @
+
+/* SolveLA:
+**
+** usage: {Lxx,Lxz,Llx,Llz,Lux,Luz}=SolveLA(Cu,Cxl,Cz,Dxl,Fxl,Du,Fu,Dz,Fz,rho,nx)
+**
+** Input:   the matrices from (2.36), where Pi=rho, and nx=n(x)
+** Output:  the policy matrices explained in Section 2.2.2
+*/
+
+proc (6)=SolveLA(Cu,Cxl,Cz,Dxl,Fxl,Du,Fu,Dz,Fz,rho,nx);
+
+   local Lxx,Lxz,Llx,Llz,Lux,Luz,Cui,temp,w,r,v,vi,t,
+         toli,lambda,q1,q2,phi,i,j,tll,vlxi,
+         vlli,vllii,itest,nl,nz,nu,phi2, phi3;
+
+   clear Lxx,Lxz,Llx,Llz,Lux,Luz;
+
+    /* Tolerence in case of numerical imprecision producing
+    ** complex policy matrices   */
+    toli=1e-10;
+
+    /* get dimension */
+ 
+   nl=cols(Dxl)-nx;
+   if ismiss(Dz) or ismiss(Fz) or ismiss(rho);
+     nz=0; 
+   else;
+     nz=cols(Cz);
+   endif;
+
+/* Compute the dynamic equation
+**
+** E_t(x[t+1]|l[t+1]) = w*(x[t]|l[t]) + r*Et(z[t+1]) + q*z[t]
+**
+*/
+
+if ((rows(Cu)==1) and (cols(Cu)==1));
+   if (Cu==0);
+       Cui=0;
+       nu=0;
+   else;
+       Cui=1/Cu;
+       nu=cols(Cu);
+   endif;
+else;
+   nu=cols(Cu);
+   Cui=inv(Cu);
+endif;
+
+temp=inv(Dxl-Du*Cui*Cxl);
+
+w=-temp*(Fxl-Fu*Cui*Cxl);
+r=temp*( (Dz+Du*Cui*Cz)*Rho + (Fz+Fu*Cui*Cz) );
+
+/*  Schur decomposition of w, test of solvability, and separation of variables */
+
+{t,v}=SchurS(w); @ was SchurO, but now with different sorting mechanism @
+?"Eigenvalues of W:";
+lambda=diag(t);
+?lambda[sortind(abs(lambda))];
+
+lambda=abs(lambda);
+if nx>0;
+    if sumc(abs(lambda[1:nx]) .> 1)>0;
+        ?"Not all of the " ftos(nx,"%*.*lf",2,0)
+        " eigenvalues are within the unit circle!";
+        ?lambda;?"";
+        ?"The program terminates! Press any key!";wait;
+        retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+    endif;
+endif;
+
+if sumc( abs(lambda[nx+1:rows(lambda)]) .< 1) > 0;
+  ?"Not all of the " ftos(nl,"%*.*lf",2,0)
+   " eigenvalues are out of the unit circle!"; 
+  ?lambda;?"";
+  ?"The program terminates. Press any key!";wait;
+  retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endif;
+
+vi=v';
+if nx>0;
+    vlxi=vi[nx+1:rows(vi),1:nx];
+endif;
+vlli=vi[nx+1:rows(vi),nx+1:cols(vi)];
+vllii=inv(vlli);
+
+temp=vi*r;
+if nx>0;
+    q1=temp[1:nx,.];
+endif;
+q2=temp[nx+1:rows(temp),.];
+
+/* Solution for lambda */
+if nz>0;
+    phi=zeros(nl,nz);
+    tll=t[nx+1:rows(t),nx+1:cols(t)];
+    i=nl;
+    do while i>0;
+        j=i+1;
+        temp=zeros(1,nz);
+            do until j>nl;
+              temp=temp+tll[i,j]*phi[j,.];
+              j=j+1;
+           endo;
+        phi[i,.]=(q2[i,.]+temp)*inv((Rho-tll[i,i]*eye(nz)));
+        i=i-1;
+    endo;
+    /* alternative code to compute phi
+    **    phi2=rho';
+    **   phi2=phi2.*.eye(nl);
+    **   phi2=phi2-(eye(nz).*tll);
+    **   phi2=inv(phi2);
+    **   phi2=phi2*vec(q2);
+    **   phi2=reshape(phi2',nl,nz);
+    */
+    Llz=vllii*phi;
+else;
+    Llz=zeros(nl,1);
+endif;
+if nx>0;
+    Llx=-vllii*vlxi;
+endif;
+
+if nx>0;
+    Lxx=v[1:nx,1:nx]*t[1:nx,1:nx]*inv(v[1:nx,1:nx]);
+    if nz>0;  Lxz=w[1:nx,nx+1:cols(w)]*Llz+r[1:nx,.]; else; Lxz=zeros(nx,1); endif;
+else;
+    Lxx=0;
+    Lxz=0;
+endif;
+if nx>0;
+   if nu>0; Lux=Cui*Cxl*(eye(nx)|Llx); else; Lux=0; endif;
+else;
+    Lux=0;
+endif;
+if nx>0;
+    if nz>0;
+         Luz=Cui*Cxl*(zeros(nx,nz)|Llz)+Cui*Cz;
+    else;
+        if nu>0; Luz=zeros(nu,1); else; Luz=0; endif;
+    endif;
+else;
+    Luz=Cui*Cxl*Llz+Cui*Cz;
+endif;
+
+/* Test for complex coefficients */
+itest=maxc(maxc(imag(Llx)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Llx";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Llx=real(Llx);
+endif;
+
+itest=maxc(maxc(imag(Llz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Llz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Llz=real(Llz);
+endif;
+
+itest=maxc(maxc(imag(Lxx)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lxx";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lxx=real(Lxx);
+endif;
+
+itest=maxc(maxc(imag(Lxz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lxz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lxz=real(Lxz);
+endif;
+
+itest=maxc(maxc(imag(Lux)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lux";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lux=real(Lux);
+endif;
+
+itest=maxc(maxc(imag(Luz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Luz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Luz=real(Luz);
+endif;
+
+
+retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endp;
+
+
+/* SolveLA2:
+**
+** usage: {Lxx,Lxz,Llx,Llz,Lux,Luz}=SolveLA2(Cu,Cxl,Cz,Dxl,Fxl,Du,Fu,Dz,Fz,rho,nx)
+**
+** Input:   the matrices from (2.36), where Pi=rho, and nx=n(x)
+** Output:  the policy matrices explained in Section 2.2.2
+*/
+
+proc (6)=SolveLA2(Cu,Cxl,Cz,Dxl,Fxl,Du,Fu,Dz,Fz,rho,nx);
+
+   local Lxx,Lxz,Llx,Llz,Lux,Luz,Cui,temp,w,r,v,vi,t,
+         toli,lambda,q1,q2,phi,i,j,tll,vlxi,
+         vlli,vllii,itest,nl,nz;
+
+   clear Lxx,Lxz,Llx,Llz,Lux,Luz;
+
+    /* Tolerence in case of numerical imprecision producing
+    ** complex policy matrices   */
+    toli=1e-10;
+
+    /* get dimension */
+ 
+   nl=cols(Dxl)-nx;
+   nz=cols(Cz);
+
+/* Compute the dynamic equation
+**
+** E_t(x[t+1]|l[t+1]) = w*(x[t]|l[t]) + r*Et(z[t+1]) + q*z[t]
+**
+*/
+
+if ((rows(Cu)==1) and (cols(Cu)==1));
+   if (Cu==0);
+       Cui=0;
+   else;
+       Cui=1/Cu;
+   endif;
+else;
+   Cui=inv(Cu);
+endif;
+
+temp=inv(Dxl-Du*Cui*Cxl);
+
+w=-temp*(Fxl-Fu*Cui*Cxl);
+r=temp*( (Dz+Du*Cui*Cz)*Rho + (Fz+Fu*Cui*Cz) );
+
+/*  Schur decomposition of w, test of solvability, and separation of variables */
+{t,v}=MySchur(w);
+?"Eigenvalues of W:";
+lambda=diag(t);
+?lambda[sortind(abs(lambda))];
+
+lambda=abs(lambda);
+if sumc(abs(lambda[1:nx]) .> 1)>0;
+  ?"Not all of the " ftos(nx,"%*.*lf",2,0)
+   " eigenvalues are within the unit circle!";
+  ?lambda;?"";
+  ?"The program terminates! Press any key!";wait;
+  retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endif;
+
+if sumc( abs(lambda[nx+1:rows(lambda)]) .< 1) > 0;
+  ?"Not all of the " ftos(nl,"%*.*lf",2,0)
+   " eigenvalues are out of the unit circle!"; 
+  ?lambda;?"";
+  ?"The program terminates. Press any key!";wait;
+  retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endif;
+
+vi=v';
+vlxi=vi[nx+1:rows(vi),1:nx];
+vlli=vi[nx+1:rows(vi),nx+1:cols(vi)];
+vllii=inv(vlli);
+
+temp=vi*r;
+q1=temp[1:nx,.];
+q2=temp[nx+1:rows(temp),.];
+
+/* Solution for lambda */
+phi=zeros(nl,nz);
+tll=t[nx+1:rows(t),nx+1:cols(t)];
+i=nl;
+do while i>0;
+   j=i+1;
+   temp=zeros(1,nz);
+   do until j>nl;
+      temp=temp+tll[i,j]*phi[j,.];
+         j=j+1;
+   endo;
+   phi[i,.]=(q2[i,.]+temp)*inv((Rho-tll[i,i]*eye(nz)));
+          i=i-1;
+endo;
+
+Llx=-vllii*vlxi;
+Llz=vllii*phi;
+Lxx=v[1:nx,1:nx]*t[1:nx,1:nx]*inv(v[1:nx,1:nx]);
+Lxz=w[1:nx,nx+1:cols(w)]*Llz+r[1:nx,.];
+Lux=Cui*Cxl*(eye(nx)|Llx);
+Luz=Cui*Cxl*(zeros(nx,nz)|Llz)+Cui*Cz;
+
+/* Test for complex coefficients */
+itest=maxc(maxc(imag(Llx)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Llx";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Llx=real(Llx);
+endif;
+
+itest=maxc(maxc(imag(Llz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Llz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Llz=real(Llz);
+endif;
+
+itest=maxc(maxc(imag(Lxx)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lxx";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lxx=real(Lxx);
+endif;
+
+itest=maxc(maxc(imag(Lxz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lxz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lxz=real(Lxz);
+endif;
+
+itest=maxc(maxc(imag(Lux)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Lux";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Lux=real(Lux);
+endif;
+
+itest=maxc(maxc(imag(Luz)));
+
+if itest > toli;
+   ?"Warning:There are complex coefficients in Luz";
+   ?"itest=" ftos(itest,"*.*lf",15,10);
+   ?"Press any key...";wait;
+else;
+   Luz=real(Luz);
+endif;
+
+
+retp(Lxx,Lxz,Llx,Llz,Lux,Luz);
+endp;
+
+proc(2)=MySchur(w);
+
+    local n, sr, si, tr, ti, t, v;
+    n=rows(w);
+    sr=zeros(n,n);
+    si=zeros(n,n);
+    tr=zeros(n,n);
+    ti=zeros(n,n);
+    dlibrary -a Tools;
+    dllcall -r schur_f(n,w,sr,si,tr,ti);
+    t=complex(sr,si);
+    v=complex(tr,ti);
+    dlibrary -d;
+retp(t,v);
+
+endp;
+
+/* SchurS */
+proc(2)=SchurS(W);
+
+   local T, S, i1, i2, i3, n, S1;
+
+  if rows(W) == 1;
+    S=W;
+    T=1;
+  else;
+
+/* Step 1: Get the real Schur factorization */
+{S,T}=schur(W);
+
+/* Step 2: Get the possibly complex Schur factorization */
+
+{S,T}=schtoc(S,T);
+
+/* Step 3:  Sort diagonal elements of T in ascending order  */
+n=rows(S); @?"Start Sorting";wait;@
+i1=1;
+@output off;@
+do while i1 < n;
+locate 5,5; @?"i1= " ftos(i1,"*.*lf",6,0);@
+i2=minindc(abs(diag(S[i1:n,i1:n])));
+   i3=i2+i1-1;
+locate 5,25;@?"imin= " ftos(i3,"*.*lf",6,0);   @
+   do until i3<(i1+1);
+      {S,T}=InterChange(S,T,i3-1);
+      i3 = i3-1;
+   endo;
+ i1=i1+1;
+endo;
+@output on;@
+endif;
+
+/* Normalize T */
+T=L2Norm(T);
+retp(S,T);
+endp;
+
+/* InterChange:
+**
+** Usage: {S,T}=Interchange(S,T,k)
+**
+** Purpose: Interchange two neighboring elements on the main diagonal of
+**          the Schur matrix S and modify the transformation matrix T accordingly.
+** 
+** Input:   S Schur matrix
+**          T tranformation matrix
+**          k index of the element being interchanged with element k+1
+**
+** Remarks: The computations are based on algorithm 7.6.1 in the book of Golub and van Loan (1996), p. 365f.
+**          See also Appendix 1 of Heer and Maussner.
+*/
+
+proc(2)=InterChange(S,T,k);
+
+   local n, c, s1, gmat;
+
+   n=cols(S);
+
+   { c,s1 } = givens(S[k,k+1],S[k+1,k+1]-S[k,k]);
+
+   gmat=(c~s1)|(-s1'~c'); 
+
+   S[k:k+1,k:n]  =gmat'S[k:k+1,k:n];
+   S[1:k+1,k:k+1]=S[1:k+1,k:k+1]*gmat;   
+   T[1:n,k:k+1]=T[1:n,k:k+1]*gmat;
+
+retp(S,T);
+endp;
+
+/* Givens:
+**
+** Usage {c,s}=Givens(a,b);
+**
+** Purpose: Get the coefficients of a Givens rotation that interchanges
+**          the element a[i,i] with the element a[i+1,i+1] of a (complex) matrix A.
+**
+**
+** Input: a=a[i,i+1]
+**        b=a[i+1,i+1]-a[i,i]
+**
+** Output: c and s as defined by algorithm 5.1.3 in the book by Golub and van Loan (1996), p. 216.
+*/
+
+
+proc(2) = givens(a,b); 
+
+   local tau, s, c;
+
+if b == 0;
+
+   c=1; s=0;
+
+elseif abs(b) > abs(a);
+   tau=-a/b; s=1/(sqrt(1+tau*tau')); c=s'*tau;
+
+else;
+   tau=-b/a; c=1/(sqrt(1+tau*tau')); s=c*tau;s=s';
+
+endif;
+
+retp(c,s);
+endp;
+
+
+/* L2Norm:
+**
+** usage: y=L2Norm(x)
+**
+** purpose: normalizes the vector x so that it has unit length
+**
+** input:  x, column vector
+** output: y, column vector with unit length
+*/
+
+proc(1)=L2Norm(x);
+
+  local i, n, norm;
+
+  n=cols(x);
+  i=1;
+  do until i>n;
+     norm=sqrt(sumc(abs(x[.,i])^2));
+     x[.,i]=x[.,i]/norm;
+     i=i+1;
+  endo;
+
+retp(x);
+
+endp;
+
