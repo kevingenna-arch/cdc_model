@@ -70,7 +70,7 @@ check;
 // Declare a positive technological shock in period 1
 shocks;
 var x;
-periods 1;
+periods 10;
 values 1.2;
 end;
 

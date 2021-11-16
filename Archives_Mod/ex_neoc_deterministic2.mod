@@ -45,6 +45,6 @@ end;
 simul(periods=200);
 // ploting results
 rplot k;
-print -dpdf k2;
+% print -dpdf k2;
 rplot c;
-print -dpdf c2;
+% print -dpdf c2;

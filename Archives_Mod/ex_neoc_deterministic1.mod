@@ -28,7 +28,7 @@ c = A*k^alpha-delta*k;
 end;
 
 initval;
-A = 1;
+A = 12;
 end;
 
 // display the steady-state
@@ -43,7 +43,7 @@ end;
 simul(periods=100);
 // ploting results
 rplot k;
-print -dpdf k1;
+% print -dpdf k1;
 rplot c;
-print -dpdf c1;
+% print -dpdf c1;
 rplot A;

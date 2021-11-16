@@ -40,16 +40,25 @@ end;
 // display the terminal steady-state
 steady;
 
+% shocks;
+% var A;
+% periods 21:25;
+% values (transpose(linspace(1.1,1.4,5)));
+% end;
+
 shocks;
 var A;
-periods 1:5;
-values (transpose(linspace(1.01,1.04,5)));
+periods 21, 22, 23, 24, 25;
+values 1, 1.2, .95, 1.02, 1;
 end;
+
+
 
 // computing the simulation
 simul(periods=100);
 // ploting results
 rplot k;
-print -dpdf k5;
+% print -dpdf k5;
 rplot c;
-print -dpdf c5;
+% print -dpdf c5;
+rplot A;

@@ -44,7 +44,8 @@ steady;
 simul(periods=100);
 // ploting results
 rplot k;
-print -dpdf k4;
+rplot A;
+% print -dpdf k4;
 rplot c;
-print -dpdf c4;
+% print -dpdf c4;
 
