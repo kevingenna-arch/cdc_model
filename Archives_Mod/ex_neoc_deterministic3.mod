@@ -38,7 +38,7 @@ steady;
 shocks;
 var A;
 periods 5,6,7,8,9;
-values 1.04, 1.05, 1.06, 1.07, 1.08;
+values 1.04, 1.05, 1.06, 1.07, 1.   08;
 end;
 
 // computing the simulation
