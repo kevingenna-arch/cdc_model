@@ -1,7 +1,7 @@
 // Basic OLG with population growth and technological growth
 
 
-periods 50;
+% periods 50;
 
 var y c D k R rd r w g pen penb penw Tw Tc Tk tauc  c1 c2 c3 c4 s1 s2 s3 ;
 
@@ -79,10 +79,10 @@ check;
 
 
 
-endval;
-tauw=.2;
-%rhow=.7;
-end;
+% endval;
+% tauw=.2;
+% %rhow=.7;
+% end;
 resid;
 steady;
 
@@ -94,10 +94,10 @@ steady;
 %end;
 
  
-perfect_foresight_setup;
+perfect_foresight_setup(periods = 50);
 
 %perfect_foresight_solver(stack_solve_algo=6);
 perfect_foresight_solver;
 
-run plotsim.m
+% run plotsim.m
 

@@ -1,6 +1,6 @@
 // Basic OLG with population growth and technological growth
 
-periods 25;
+% periods 25;
 
 var test P1 P2 P3 P4 Ptot y k l w R r c tr g beq c1 c2 c3 c4 s1 s2 s3;
 
@@ -108,7 +108,7 @@ steady;
 resid;
 
 
-perfect_foresight_setup;
+perfect_foresight_setup(periods = 250);
 perfect_foresight_solver;
 
 
