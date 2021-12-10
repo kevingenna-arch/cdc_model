@@ -10,12 +10,14 @@ parameters beta alpha delta a1 a2 a3;
 beta = 0.97; // 0.97^30 0.98^(55/4)
 alpha = 1/3; 
 delta = .02;  //1-(1-0.08)^(55/4)
+delta = .02;  //1-(1-0.08)^(55/4)
 a1=.8; 
 a2=.9; 
 a3=1;
 
 model;
 
+% pop dynamics 
 P1=xpop;
 P2=beta2(-1)*P1(-1)+mig2;
 P3=beta3(-1)*P2(-1)+mig3;
