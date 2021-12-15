@@ -129,7 +129,11 @@ pop1		=	[	0.913527458	0.913397814	0.896215333	0.875122525	0.907232011	0.97700504
 	@#for i in 1:NLS
 		var welf_@{ql}_@{i};
 	@#endfor
-	
+	% aggregates by skill class:
+	% -	L: aggregate labour
+	% - MPL: marginal produc of labour
+	% -	penind: indexed pension wage
+	% - pi: share of first gen going for edu -- mirroring 
 	var L_@{ql} MPL_@{ql} penind_@{ql} pi_@{ql};
 
 @#endfor
@@ -143,9 +147,11 @@ var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D
 varexo A tauf xpop lambb lambbb A_Q;
 
 @#for ql in qualif
+	% health stock or shocks?
 	varexo h_@{ql}_1;
 
 	@#for i in 2:NLS
+		% shocks for migration and health stock
 		varexo mig_@{ql}_@{i} med_@{ql}_@{i};
 	@#endfor
 
@@ -159,14 +165,19 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho; //rep
 
 @#for ql in qualif
 	@#for i in 1:NT
+		% a: worker productivity by age
+		% e: switcher for skill level
 		parameters a_@{ql}_@{i} e_@{ql}_@{i};    
 	@#endfor
 @#endfor
 
 @#for i in 1:NT
-	a_NQ_@{i}=.7+log(@{i})/10;  // Profil de productivite par age
-	e_NQ_@{i}=0;                // Indicatrice d'education
+	% productivity by age
+	a_NQ_@{i}=.7+log(@{i})/10;
+	% switcher for education
+	e_NQ_@{i}=0;
 	@#if i <= NE
+		% values for prod and switcher for skills
 		a_Q_@{i}=.7+log(@{i})/10;
 		e_Q_@{i}=1;
 	@#else 
@@ -746,7 +757,7 @@ end;
 steady;
 
 
-
+%%%%% CALIBRATION BLOCK: swapping endo for exo vars and storing values
 //7) Chocs transitoires (trajectoires demographiques et economiques)**************************************
 shocks;
 
@@ -1015,6 +1026,13 @@ perfect_foresight_solver(maxit = 10);
 
 */
 
+%%%%%% SImulating around a SS
+% currently commented, aim at starting from 1900 SS and ending
+% 2100 with progressive SS for exovars
+/*
+perfect_foresight_setup(periods=50);
+perfect_foresight_solver(maxit = 10);
+*/
 run plotsim.m
 
 yrs = 1900+(1:40)*5;
