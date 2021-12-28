@@ -8,7 +8,7 @@ cdc/
 *.mp4
 *_results.mat
 tests/
-
+*.sublime-*
 
 
 
