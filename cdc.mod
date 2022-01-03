@@ -1029,10 +1029,15 @@ perfect_foresight_solver(maxit = 10);
 %%%%%% SImulating around a SS
 % currently commented, aim at starting from 1900 SS and ending
 % 2100 with progressive SS for exovars
-/*
+% /*
+
+resid;
+steady;
+% check;
+
 perfect_foresight_setup(periods=50);
 perfect_foresight_solver(maxit = 10);
-*/
+% */
 run plotsim.m
 
 yrs = 1900+(1:40)*5;

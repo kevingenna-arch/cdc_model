@@ -60,7 +60,7 @@
 
 @#endfor
 
-var Kmig y1 check;
+var Kmig y1 cCheck;
 
 var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D lambc Defratio Dratio Gratio Penratio Edratio Tkratio Tcratio Twratio rhop tauw tauk tauc v;
 
@@ -476,7 +476,7 @@ Penratio=0.14;
 % y1 mops up any residual on goods' mkt
 y1 + Kmig = (c + I + g + Deped);
 % check ought be 0
-check=y + Kmig - (c + I + g + Deped);
+cCheck=y + Kmig - (c + I + g + Deped);
 
 end;
 
@@ -636,9 +636,11 @@ check;
 perfect_foresight_setup(periods = 50);
 perfect_foresight_solver(maxit = 10);
 
-verbatim;
-pensione = [
-@#for pp in 1:NLS-1
- welf_NQ_@{pp}, 
-@#endfor
-welf_NQ_@{NLS}]
+
+%% Blueprint for building up aggregate matrices with relevant info
+% verbatim;
+% pensione = [
+% @#for u in 1:NLS
+% 	welf_Q_@{u} ...
+% @#endfor
+% ]
