@@ -79,7 +79,7 @@ varexo A tauf xpop lambb lambbb A_Q;
 @#endfor
 
 %%%%% Parameters and values
-parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho; //rep
+parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 
 @#for ql in qualif
 	@#for i in 1:NT
@@ -117,7 +117,7 @@ T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
 
-%%%%% Model specification
+%%%%% Model specification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
 
 % education choice on recursive discounted welfare
@@ -163,8 +163,28 @@ pi_Q=1-pi_NQ;
 
 @#endfor
 
+% total population summing over cohorts
+% including retired
+Ptot= (
+@#for i in 1:NLS
+	@#for ql in qualif
+		+ P_@{ql}_@{i}
+	@#endfor
+@#endfor
+);
+
+% only retired gens
+Pret= (
+@#for i in NT+1:NLS
+	@#for ql in qualif
+		+ P_@{ql}_@{i}
+	@#endfor
+@#endfor
+);
+
 
 % Labour supply for lower skill
+% individual levels
 @#for i in 1:NT
 	% marginal disutility of labour equates net wage
 	gam1*(1-lab_NQ_@{i})^(-gam) = lamda_NQ_@{i} * (1-tauw)*w_NQ_@{i} +
@@ -176,6 +196,7 @@ pi_Q=1-pi_NQ;
 @#endfor
 
 % Labour supply for higher skill
+% individual levels
 @#for i in 1:NT
 	% condition for education
 	@#if i <= NE
@@ -202,8 +223,6 @@ D + kbar = (
 @#endfor
 );
 
-
-
 % net capital from migration
 Kmig=(
 @#for i in 2:NLS
@@ -212,7 +231,6 @@ Kmig=(
 	@#endfor
 @#endfor
 );
-
 
 % investment
 I = kbar - (1-delta)*kbar(-1);
@@ -226,7 +244,7 @@ c = (
 @#endfor
 );
 
-// Stock de sante agrege
+% Health stock, aggregate
 H = (
 @#for i in 1:NT
 	@#for ql in qualif
@@ -235,12 +253,17 @@ H = (
 @#endfor
 );
 
-// Fonction de production
+% Aggregate production
+% kbar is tot cap
+% nbar is tot labour
 y = A * kbar(-1)^(1-alp) * nbar^alp;   
 
-// Travail aggrege
+% tot agg labour 
+% depends on health stock
 nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
+% total labour by skill
+% accounts for number and prod
 @#for ql in qualif
 	L_@{ql} = (
 	@#for i in 1:NT
@@ -249,17 +272,16 @@ nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 	);
 @#endfor
 
-// Productivite marginale du travail aggrege (CPO de la firme)
+% MPL by skill from agg prod
 MPL_Q =  A * alp * kbar(-1)^(1-alp) * nbar^(alp-rho) * eta * A_Q^rho * L_Q^(rho-1);       
 MPL_NQ =  A * alp * kbar(-1)^(1-alp) * nbar^(alp-rho) * (1-eta) * L_NQ^(rho-1);       
 
-// Productivite marginale du capital aggrege (CPO de la firme)
+% MPK 
 R =  A * (1-alp) * kbar(-1)^(-alp) * nbar^alp;
-// Taux de location du capital
+% gross interest rate
 R = r + delta;
 
-
-// Salaires net des cotisation patronales
+% wages without labour taxes for firms
 @#for i in 1:NT
 	(1+tauf) * w_NQ_@{i} = MPL_NQ * a_NQ_@{i};
 	@#if i <= NE
@@ -270,26 +292,7 @@ R = r + delta;
 @#endfor
 
 
-// Population totale
-Ptot= (
-@#for i in 1:NLS
-	@#for ql in qualif
-		+ P_@{ql}_@{i}
-	@#endfor
-@#endfor
-);
-
-// Population a la retraite
-Pret= (
-@#for i in NT+1:NLS
-	@#for ql in qualif
-		+ P_@{ql}_@{i}
-	@#endfor
-@#endfor
-);
-
-
-// Legs accidentels
+% bequests before last period (certain end of life)
 Ptot*beq= (
 @#for i in 1:NLS-1
 	@#for ql in qualif
@@ -299,7 +302,8 @@ Ptot*beq= (
 );
 
 
-// Pension de base
+% Retirement -- regular
+% this at individual level
 penbase =  ((@{NT-NE}/(@{NT-NE}+@{NT}))*(
 @#for i in NE+1:NT
     + (1-tauw)*w_Q_@{i}*lab_Q_@{i}
@@ -312,10 +316,9 @@ penbase =  ((@{NT-NE}/(@{NT-NE}+@{NT}))*(
 @#endfor
 ));
 
-
+% retirement indexation
 @#for ql in qualif
-
-	// Indexation des retraites sur les salaires des 25 dernieres annees (5 periodes)
+	% indexing on last 5(?) periods
 	penind_@{ql} =  (1/@{IR})*(
 	@#for i in NT-IR+1:NT
 	    + (1-tauw(@{-i}))*w_@{ql}_@{NT+1-i}(@{-i})*lab_@{ql}_@{NT+1-i}(@{-i})
@@ -323,15 +326,16 @@ penbase =  ((@{NT-NE}/(@{NT-NE}+@{NT}))*(
 	);
 	
 	
-	// Pensions de retraite
+	% weighting both pensions schemes
 	@#for i in NT+1:NLS
-		pen_@{ql}_@{i}  = 0*penbase + rhop * penind_@{ql}(@{NT-i}); 
+		% rhop gives the balance, by now tunred off the base pens
+		pen_@{ql}_@{i}  = 0*(1-rhop)*penbase + rhop * penind_@{ql}(@{NT-i}); 
 	@#endfor
 
 @#endfor
 
 
-// Revenus de la taxation des revenus du travail
+% total labour tax 
 Tw = (
 @#for i in 1:NT
 	@#for ql in qualif
@@ -340,7 +344,26 @@ Tw = (
 @#endfor
 );
 
-// Depenses de retraite
+% total capital tax
+Tk =  (
+@#for i in 1:NLS-1
+	@#for ql in qualif
+		+ P_@{ql}_@{i}(-1)*tauk*r*k_@{ql}_@{i+1}(-1)
+	@#endfor
+@#endfor
+);
+
+% total consumption tax
+Tc =  (
+@#for i in 1:NLS
+	@#for ql in qualif
+		+ P_@{ql}_@{i}*tauc*c_@{ql}_@{i}
+	@#endfor
+@#endfor
+);
+
+% public spending for retirement wages
+% alredy combines indexation and base
 retire = (
 @#for i in NT+1:NLS
 	@#for ql in qualif
@@ -349,106 +372,110 @@ retire = (
 @#endfor
 );
 
-// Revenus de la taxation du capital
-Tk =  (
-@#for i in 1:NLS-1
-@#for ql in qualif
-+ P_@{ql}_@{i}(-1)*tauk*r*k_@{ql}_@{i+1}(-1)
-@#endfor
-@#endfor
-);
-
-// Revenus de la taxation de la consommation
-Tc =  (
-@#for i in 1:NLS
-@#for ql in qualif
-+ P_@{ql}_@{i}*tauc*c_@{ql}_@{i}
-@#endfor
-@#endfor
-);
-
-// Depenses d'education
+% educ spending by gvt
 Deped=(
 @#for i in 1:NT
-@#for ql in qualif
-+ P_@{ql}_@{i}*w_NQ_@{i}*e_@{ql}_@{i}                
-@#endfor
+	@#for ql in qualif
+		+ P_@{ql}_@{i}*w_NQ_@{i}*e_@{ql}_@{i}                
+	@#endfor
 @#endfor
 );
 
-// Contrainte budgetaire de l'Etat
+% gvt budget constraint
 Def= g + retire + v*Deped - (Tw+Tc+Tk);
+% debt dynamics
 D = (1+rd)*D(-1) + Def;
+% debt interests
+% same as any other K
 rd = r;
 
 
-// Contraintes budgetaires
-
+% sequences of budget constraints
 @#for ql in qualif
-@#for i in 1:NLS
-@#if i <= NT
-// Contrainte budgaire des actifs
-(1+tauc)*c_@{ql}_@{i} = (1 + (1-tauk)*r) * k_@{ql}_@{i}(-1) + (1-tauw)*w_@{ql}_@{i}*lab_@{ql}_@{i} - w_NQ_@{i}*(1-v)*e_@{ql}_@{i} - k_@{ql}_@{i+1} + beq;
-@#else
-@#if i != NLS
-// Contrainte budgetaire des retraites (sauf derniere periode de vie)
-    (1+tauc)*c_@{ql}_@{i} = (1 + (1-tauk)*r) * k_@{ql}_@{i}(-1) + pen_@{ql}_@{i} - k_@{ql}_@{i+1} + beq;
-@#else
-// Contrainte budgetaire de derniere periode de vie
-    (1+tauc)*c_@{ql}_@{i} = (1 + (1-tauk)*r) * k_@{ql}_@{i}(-1) + pen_@{ql}_@{i} + beq;
-@#endif
-@#endif
-@#endfor  
+	@#for i in 1:NLS
+		@#if i <= NT
+			% workers
+			(1+tauc)*c_@{ql}_@{i} = (1 + (1-tauk)*r) * k_@{ql}_@{i}(-1) + (1-tauw)*w_@{ql}_@{i}*lab_@{ql}_@{i} - w_NQ_@{i}*(1-v)*e_@{ql}_@{i} - k_@{ql}_@{i+1} + beq;
+		@#else
+		@#if i != NLS
+			% retired before last period
+	    (	1+tauc)*c_@{ql}_@{i} = (1 + (1-tauk)*r) * k_@{ql}_@{i}(-1) + pen_@{ql}_@{i} - k_@{ql}_@{i+1} + beq;
+		@#else
+			% budget exhaustion condition -- last period
+	    	(1+tauc)*c_@{ql}_@{i} = (1 + (1-tauk)*r) * k_@{ql}_@{i}(-1) + pen_@{ql}_@{i} + beq;
+		@#endif
+		@#endif
+	@#endfor  
 @#endfor
 
 
-
-// Fonctions de bien-être
-
+% Welfare functiton: discounted sum of consumption/labour streams
+% just NPV of U function, no health so far
 @#for i in 1:NLS
-@#if i <= NT
-welf_NQ_@{i}=log(c_NQ_@{i}) + gam1*(1-lab_NQ_@{i})^(1-gam)/(1-gam) + beta*beta_NQ_@{i+1}*welf_NQ_@{i+1}(+1);
-@#if i <= NE
-welf_Q_@{i}=log(c_Q_@{i}) + gam1*(1-lab_Q_@{i})^(1-gam)/(1-gam) - lambc + beta*beta_Q_@{i+1}*welf_Q_@{i+1}(+1);
-@#else
-welf_Q_@{i}=log(c_Q_@{i}) + gam1*(1-lab_Q_@{i})^(1-gam)/(1-gam) + beta*beta_Q_@{i+1}*welf_Q_@{i+1}(+1);
-@#endif
-@#else
-@#if i != NLS
-welf_NQ_@{i}=log(c_NQ_@{i}) + gam1/(1-gam) + beta*beta_NQ_@{i+1}*welf_NQ_@{i+1}(+1);
-welf_Q_@{i}=log(c_Q_@{i}) + gam1/(1-gam) + beta*beta_Q_@{i+1}*welf_Q_@{i+1}(+1);
-@#else
-welf_NQ_@{NLS}=log(c_NQ_@{NLS}) + gam1/(1-gam);
-welf_Q_@{NLS}=log(c_Q_@{NLS}) + gam1/(1-gam);
-@#endif
-@#endif
+	@#if i <= NT
+		% WF for unskilled
+		welf_NQ_@{i}=log(c_NQ_@{i}) + gam1*(1-lab_NQ_@{i})^(1-gam)/(1-gam) + beta*beta_NQ_@{i+1}*welf_NQ_@{i+1}(+1);
+		% WF for skilled
+		@#if i <= NE
+		% accounting for educ period
+		welf_Q_@{i}=log(c_Q_@{i}) + gam1*(1-lab_Q_@{i})^(1-gam)/(1-gam) - lambc + beta*beta_Q_@{i+1}*welf_Q_@{i+1}(+1);
+		@#else
+		% working age periods WF 
+		welf_Q_@{i}=log(c_Q_@{i}) + gam1*(1-lab_Q_@{i})^(1-gam)/(1-gam) + beta*beta_Q_@{i+1}*welf_Q_@{i+1}(+1);
+	@#endif
+	@#else
+	@#if i != NLS
+		% retirement WFs
+		welf_NQ_@{i}=log(c_NQ_@{i}) + gam1/(1-gam) + beta*beta_NQ_@{i+1}*welf_NQ_@{i+1}(+1);
+		welf_Q_@{i}=log(c_Q_@{i}) + gam1/(1-gam) + beta*beta_Q_@{i+1}*welf_Q_@{i+1}(+1);
+	@#else
+		% last period WF
+		welf_NQ_@{NLS}=log(c_NQ_@{NLS}) + gam1/(1-gam);
+		welf_Q_@{NLS}=log(c_Q_@{NLS}) + gam1/(1-gam);
+	@#endif
+	@#endif
 @#endfor 
 
 
 
-// Ratio depenses et recettes sur PIB
+% ratios:
+% deficit over GDP
 Defratio*y=Def;
+% debt over GDP
 Dratio*y=D;
+% retirement spending over GDP
 Penratio*y=retire;
+% g is just gvt wasteful consumption, not having any effect here
+% discretional spendig/consumption over GDP
 Gratio*y=g;
+% eduction spending over GDP
+% weighted by
 Edratio*y=v*Deped;
+% capital income tax revenue over GDP
 Tkratio*y=Tk;
+% consumption tax revenue over GDP
 Tcratio*y=Tc;
+% labour income tax revenue over GDP
 Twratio*y=Tw;
 
-//Defratio=.03;
-//Edratio=.06;
+% setting some ratios !!! within model block? !!!
+% v is participation to educ expenses by individual
 v=.8;
+% target 30% debt to GDP
 Dratio=.3;
+% discretional spending to 30%
 Gratio=.3;
+% K tax revenue to 10%
 Tkratio=.1;
+% C tax revenue to 10%
 Tcratio=.1;
+% pension exp ratio to 14%
 Penratio=0.14;
-//rhop=.5;
 
-
-// Verification de la condition d'equilibre du marche des biens
+% consistency checks
+% y1 mops up any residual on goods' mkt
 y1 + Kmig = (c + I + g + Deped);
+% check ought be 0
 check=y + Kmig - (c + I + g + Deped);
 
 end;
@@ -457,36 +484,38 @@ end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% STOP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 initval;
+% initival provides initial guesses for solving for the actual SS
+% which can differ from initial values
 
 @#for ql in qualif
 
-@#for i in 1:NLS
-k_@{ql}_@{i} = 5;
-lamda_@{ql}_@{i} =1;
-c_@{ql}_@{i}=1;
-P_@{ql}_@{i}=.9;
-@#endfor
+	@#for i in 1:NLS
+		k_@{ql}_@{i} = 5;
+		lamda_@{ql}_@{i} =1;
+		c_@{ql}_@{i}=1;
+		P_@{ql}_@{i}=.9;
+	@#endfor
 
-h_@{ql}_1=120;
-@#for i in 2:NLS
-beta_@{ql}_@{i}=.9;
-h_@{ql}_@{i}=120;
-@#endfor
+	h_@{ql}_1=120;
+	@#for i in 2:NLS
+		beta_@{ql}_@{i}=.9;
+		h_@{ql}_@{i}=120;
+	@#endfor
 
-@#for i in 1:NT
-lab_@{ql}_@{i}=.7;
-w_@{ql}_@{i}=.1;
-@#endfor
+	@#for i in 1:NT
+		lab_@{ql}_@{i}=.7;
+		w_@{ql}_@{i}=.1;
+	@#endfor
 
-@#for i in NT+1:NLS
-pen_@{ql}_@{i}=.2;
-@#endfor
+	@#for i in NT+1:NLS
+		pen_@{ql}_@{i}=.2;
+	@#endfor
 
-penind_@{ql}=1;
-k_@{ql}_1=0;
+	penind_@{ql}=1;
+	k_@{ql}_1=0;
 
-MPL_@{ql}=.6;
-L_@{ql}=15;
+	MPL_@{ql}=.6;
+	L_@{ql}=15;
 
 @#endfor
 
@@ -594,12 +623,22 @@ tauk 		=	.2;
 A 			= 	1;
 A_Q 		= 	2;
 
-
-
 xpop    	=    0.5893;
 
 
 end;
-steady;
+
 resid;
+
+steady;
 check;
+
+perfect_foresight_setup(periods = 50);
+perfect_foresight_solver(maxit = 10);
+
+verbatim;
+pensione = [
+@#for pp in 1:NLS-1
+ welf_NQ_@{pp}, 
+@#endfor
+welf_NQ_@{NLS}]
