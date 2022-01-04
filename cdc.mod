@@ -674,11 +674,14 @@ xpop    	=    0.5893;
 
 
 end;
-steady;
+//steady;
 //resid;
 //check;
 
-
+resid;
+steady;
+//check;
+resid;
 
 
 /*
