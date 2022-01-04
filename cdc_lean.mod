@@ -8,7 +8,7 @@
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
 
-%%%%% Endogenous Vars
+%%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
 @#for ql in qualif
 	% capital stock by age
@@ -64,7 +64,7 @@ var Kmig y1 cCheck;
 
 var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D lambc Defratio Dratio Gratio Penratio Edratio Tkratio Tcratio Twratio rhop tauw tauk tauc v;
 
-%%%%% Exogenous Vars
+%%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A tauf xpop lambb lambbb A_Q;
 
 @#for ql in qualif
@@ -117,7 +117,7 @@ T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
 
-%%%%% Model specification %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
 
 % education choice on recursive discounted welfare
@@ -482,7 +482,7 @@ end;
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%% STOP %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 initval;
 % initival provides initial guesses for solving for the actual SS
 % which can differ from initial values
@@ -635,12 +635,3 @@ check;
 
 perfect_foresight_setup(periods = 50);
 perfect_foresight_solver(maxit = 10);
-
-
-%% Blueprint for building up aggregate matrices with relevant info
-% verbatim;
-% pensione = [
-% @#for u in 1:NLS
-% 	welf_Q_@{u} ...
-% @#endfor
-% ]
