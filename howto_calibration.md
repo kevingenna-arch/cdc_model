@@ -17,7 +17,7 @@ On peut donc sauvegarder ces valeurs de $X$ (et, le cas échéant, de $\epsilon$
 
 #### Autres Variables
 
-##### xpop
+##### `xpop`
 Variable mystérieuse qui donne des informations sur la population au tout debout des générations. 
 Notamment, si $\pi_s$ est la proportion entre qualifiés et non qualifiés on a $P_{s,1} = \pi_s \times xpop$, puis chaque cohorte évolue selon sa propre dynamique $P_{s,j,t} = \beta_{s,j,t-1} P_{s,j-1,t-1} + mig_{s,j,t}$.
 
@@ -28,6 +28,23 @@ Le choc à cibler est celui de migration.
 Pour ce faire on porte $mig_{s,j}$ comme variable endogène, et on transforme $P_{s,j}$ en variable exogène. 
 Or, les chocs migratoires sont $(T-1)\times S$, où $T$ est le nombre total de générations, 17, et $S$ les deux niveaux de qualification. 
 Cela laisse une différence de deux variables, notamment $P_{s,1}$.
+Ces deux variables dépendent de `xpop`, donc on éteint temporairement cette variable aussi.
+Comme `initval`s pour les variables de population on utilise des valeurs proches de celles d’état stationnaire précédemment trouvées, $.8$.
+En revanche, on utilise le bloc `shocks;` pour passer les valeurs historiques des variables de population, $P_{s, j, t}$.
+
+Afin de sauvegarder les résultats, on utilise le commande `save_params_and_steady_state` qui permet de stocker les valeurs des paramètres et des variables à l’état stationnaire.
+De plus, on simule beaucoup plus de périodes que prévu, notamment 100 au lieu de 40 quinquennats.
+Les chocs seront donc une sequence au milieu de ces periodes.
+
+
+_Nota bene sur les données_: les données utilisées dans ce cas sont celles historiques de l'INSEE fusionnées avec les projections du scenario central jusqu'à 2121.
+La période d’intérêt couvre finalement de 1900 à 2100, avec des données officielles.
+On agrège les observations par an et par age unitaire à des quinquennats (de 4.99 ans), pareil pour les classes d'age sauf une agrégation complète pour les ultra-centenaires.
+Pour la normalisation des niveaux des classes de population on prend comme référence la classe des $0-4$ en 2000, l'année centrale.
+Comme le modèle se base sur 17 générations, on ne considère pas les données des classes $0-20$.
+Les mêmes données de population sont pour l'instant utilisées pour tout niveau de qualification.
+
+
 
 
 
@@ -43,3 +60,12 @@ Cela laisse une différence de deux variables, notamment $P_{s,1}$.
 	* [SS](https://www.dynare.org/manual/the-model-file.html#steady-state)
 	* [Chocs](https://www.dynare.org/manual/the-model-file.html#shocks-on-exogenous-variables)
 	* [vartype flipping](https://www.dynare.org/manual/the-model-file.html#change_type)
+	* [`save_params_and_steady_state` pour la calibration](https://www.dynare.org/manual/the-model-file.html#save_params_and_steady_state)
+
+#### Autres notes
++ pull out var names from simulations and simulations series: 
+```
+simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
+simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
+writetable(simuls, 'simuls.csv', 'Delimiter', ',')
+```
