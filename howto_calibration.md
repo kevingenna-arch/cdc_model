@@ -34,7 +34,12 @@ En revanche, on utilise le bloc `shocks;` pour passer les valeurs historiques de
 
 Afin de sauvegarder les résultats, on utilise le commande `save_params_and_steady_state` qui permet de stocker les valeurs des paramètres et des variables à l’état stationnaire.
 De plus, on simule beaucoup plus de périodes que prévu, notamment 100 au lieu de 40 quinquennats.
-Les chocs seront donc une sequence au milieu de ces periodes.
+Les chocs seront donc une séquence au milieu de ces périodes.
+
+Le modèle sera donc résolu à partir des `initval` données, Dynare définira un ES cohérent et simulera $\pm 500$ ans.
+Si les chocs frappent en $t'$ les agents commenceront à anticiper ces chocs avant, comme le modèle est déterministe.
+Une fois la simulation terminée, les séries temporelles sont sauvegardées et les résultats extraits de ces séries.
+Dans ce cas on sauvegarde les séries des chocs migratoires.
 
 
 _Nota bene sur les données_: les données utilisées dans ce cas sont celles historiques de l'INSEE fusionnées avec les projections du scenario central jusqu'à 2121.
@@ -68,4 +73,13 @@ Les mêmes données de population sont pour l'instant utilisées pour tout nivea
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
 writetable(simuls, 'simuls.csv', 'Delimiter', ',')
+% select only matching vars
+matched = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
+mig_shocks = simuls(:, simuls.Properties.VariableNames(matched));
+mig_flipped = rows2vars(mig_shocks);
+mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
+writetable(mig_flipped(:, (start:end)+1), 'mig_shocks.xlsx', 'WriteVariableNames',false);
+% la derniere ligne laisse une ligne de plus (sans nom) dans le fichier
 ```
++	_NB_: Dynare rajoute toujours une periode de plus à $t-1$ pour les simulations.
+Cela change le timing des chocs aussi: un choc prevu à $t\in (12, 15)$ se trouve en vrai en $t\in(12, 16)$
