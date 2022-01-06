@@ -5,47 +5,47 @@ import matplotlib.pyplot as plt
 
 def classing(row):
     if row['age'] in range(0,5):
-        return 'pop1'
+        return 1
     elif row['age'] in range(5,10):
-        return 'pop2'
+        return 2
     elif row['age'] in range(10,15):
-        return 'pop3'
+        return 3
     elif row['age'] in range(15,20):
-        return 'pop4'
+        return 4
     elif row['age'] in range(20,25):
-        return 'pop5'
+        return 5
     elif row['age'] in range(25,30):
-        return 'pop6'
+        return 6
     elif row['age'] in range(30,35):
-        return 'pop7'
+        return 7
     elif row['age'] in range(35,40):
-        return 'pop8'
+        return 8
     elif row['age'] in range(40,45):
-        return 'pop9'
+        return 9
     elif row['age'] in range(45,50):
-        return 'pop10'
+        return 10
     elif row['age'] in range(50,55):
-        return 'pop11'
+        return 11
     elif row['age'] in range(55,60):
-        return 'pop12'
+        return 12
     elif row['age'] in range(60,65):
-        return 'pop13'
+        return 13
     elif row['age'] in range(65,70):
-        return 'pop14'
+        return 14
     elif row['age'] in range(70,75):
-        return 'pop15'
+        return 15
     elif row['age'] in range(75,80):
-        return 'pop16'
+        return 16
     elif row['age'] in range(80,85):
-        return 'pop17'
+        return 17
     elif row['age'] in range(85,90):
-        return 'pop18'
+        return 18
     elif row['age'] in range(90,95):
-        return 'pop19'
+        return 19
     elif row['age'] in range(95,100):
-        return 'pop20'
+        return 20
     else:
-        return 'pop21'
+        return 21
 
 def classing_labs(row):
     if row['age'] in range(0,5):
@@ -139,9 +139,14 @@ retrolong['classes'] = retrolong.apply(classing, axis=1)
 projlong['labels'] = projlong.apply(classing_labs, axis=1)
 retrolong['labels'] = retrolong.apply(classing_labs, axis=1)
 
+# same for labels
+projlong_lbs = projlong.groupby(['year', 'labels']).sum().reset_index()
+retrolong_lbs = retrolong.groupby(['year', 'labels']).sum().reset_index()
+
 # sum up by class and year
 projlong = projlong.groupby(['year', 'classes']).sum().reset_index()
 retrolong = retrolong.groupby(['year', 'classes']).sum().reset_index()
+
 
 # reclassify years
 projlong['cohort'] = projlong.apply(cohorter, axis=1)
@@ -165,7 +170,30 @@ popdata = pd.concat([projlong.drop(columns = 'year', axis = 1),
             .mean('pop') \
             .reset_index() \
             .pivot(index='classes', columns='cohort', values='pop') \
-            .reset_index() 
+            .reset_index()\
+
+popdata_norm1900 = popdata[(popdata['classes'] == 1)]['1900-1905'][0]
+popdata_norm1950 = popdata[(popdata['classes'] == 1)]['1950-1955'][0]
+popdata_norm2000 = popdata[(popdata['classes'] == 1)]['2000-2005'][0]
+
+pop1900 = popdata.drop(columns = 'classes', axis = 1).divide(popdata_norm1900)
+pop1950 = popdata.drop(columns = 'classes', axis = 1).divide(popdata_norm1950)
+pop2000 = popdata.drop(columns = 'classes', axis = 1).divide(popdata_norm2000)
+
+pop1900.to_csv('H:/Il mio Drive/datawork/pop_normalised1900.csv')
+pop1950.to_csv('H:/Il mio Drive/datawork/pop_normalised1950.csv')
+pop2000.to_csv('H:/Il mio Drive/datawork/pop_normalised2000.csv')
+
+### pop labs
+popdata_lab = pd.concat([projlong_lbs.drop(columns = 'year', axis = 1),
+                        retrolong_lbs.drop(columns = 'year', axis = 1)],    
+                        ignore_index=True) \
+                .groupby(['cohort', 'labels']) \
+                .mean('pop') \
+                .reset_index() \
+                .pivot(index='labels', columns='cohort', values='pop') \
+                .reset_index()\
+
 
 popdata.to_csv('H:/Il mio Drive/datawork/popdata.csv', index=False)
 
@@ -179,20 +207,34 @@ total_pop.to_csv('H:/Il mio Drive/datawork/total_pop.csv', index=False)
 # popdata['class_label'] = popdata.apply(classing_labs, axis=1)
 
 
-(
-    ggplot(popdata) 
-    + aes(x='cohort', y='pop', color='classes', group='classes') 
-    + geom_line()
-)
-
-(
-    ggplot(total_pop)
-    + aes(x = 'year', y = 'pop', color = 'cohort')
-    + geom_line()
-)
-
 total_pop.groupby(['cohort']).mean(['pop']).reset_index().plot(x='cohort', y='pop', kind='line')
 plt.show()
 
 popdata[popdata["classes"] == 'pop1'].melt(id_vars = 'classes', value_name='ii', var_name='rr').plot(x = 'rr', y = 'ii', kind = 'line')
 plt.show()
+
+###############################################################################
+
+ps_hq = pd.read_excel('H:/Il mio Drive/datawork/ps_hq.xlsx') \
+    .rename(columns={'annee':'year'}) \
+        .melt(id_vars=['year'], value_name='ps', var_name='age')
+
+ps_hq['qualif'] = 'hq'
+ps_hq['classes'] = ps_hq.apply(classing, axis=1)
+ps_hq['cohort'] = ps_hq.apply(cohorter, axis=1)
+ps_hq.drop(columns = ['age', 'year'], axis = 1, inplace = True)
+
+ps_nq = pd.read_excel('H:/Il mio Drive/datawork/ps_nq.xlsx') \
+    .rename(columns={'annee':'year'}) \
+        .melt(id_vars=['year'], value_name='ps', var_name='age')
+
+ps_nq['qualif'] = 'nq'
+ps_nq['classes'] = ps_nq.apply(classing, axis=1)
+ps_nq['cohort'] = ps_nq.apply(cohorter, axis=1)
+ps_nq.drop(columns = ['age', 'year'], axis = 1, inplace = True)
+
+ps = pd.concat([ps_hq, ps_nq], 
+                ignore_index=True)
+
+pops = ps.join(popdata.melt(id_vars = 'classes', value_name='pop', var_name='cohort'),
+                 on = ['cohort'])
