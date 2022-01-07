@@ -584,7 +584,7 @@ initval;
 
 @#for j in 2:NLS
 	@#for s in qualif
-		mig_@{s}_@{j} = .5;
+		mig_@{s}_@{j} = 0;
 	@#endfor
 @#endfor
 
@@ -662,7 +662,7 @@ A_Q 		= 	2;
 
 @#for i in 1:NLS
 	@#for s in qualif
-		P_@{s}_@{i} = 1;
+		P_@{s}_@{i} = .55;
 	@#endfor
 @#endfor
 
@@ -702,4 +702,6 @@ perfect_foresight_solver(maxit = 20,
 verbatim;
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
-writetable(simuls, 'simuls.csv', 'Delimiter', ';')
+writetable(simuls, 'simuls.csv', 'Delimiter', ';');
+% effacer toute variable auxiliaire
+clear AUX_* ;

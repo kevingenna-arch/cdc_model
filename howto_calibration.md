@@ -78,7 +78,7 @@ matched = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'o
 mig_shocks = simuls(:, simuls.Properties.VariableNames(matched));
 mig_flipped = rows2vars(mig_shocks);
 mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-writetable(mig_flipped(:, (start:end)+1), 'mig_shocks.xlsx', 'WriteVariableNames',false);
+writetable(mig_flipped(:, (start:end)+2), 'mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 % la derniere ligne laisse une ligne de plus (sans nom) dans le fichier
 ```
 +	_NB_: Dynare rajoute toujours une periode de plus à $t-1$ pour les simulations.
