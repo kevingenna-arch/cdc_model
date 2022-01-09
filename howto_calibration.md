@@ -37,9 +37,12 @@ De plus, on simule beaucoup plus de périodes que prévu, notamment 100 au lieu 
 Les chocs seront donc une séquence au milieu de ces périodes.
 
 Le modèle sera donc résolu à partir des `initval` données, Dynare définira un ES cohérent et simulera $\pm 500$ ans.
-Si les chocs frappent en $t'$ les agents commenceront à anticiper ces chocs avant, comme le modèle est déterministe.
+Si les chocs frappent en $t'$ les agents anticipent ces chocs à l'avance, car le modèle est déterministe.
 Une fois la simulation terminée, les séries temporelles sont sauvegardées et les résultats extraits de ces séries.
 Dans ce cas on sauvegarde les séries des chocs migratoires.
+
+L’étape suivante est de rétablir le type des variables et introduire les chocs générés précédemment.
+Cela revient à declarer $P_{s,j}$ comme variables endogenes, $mig_{s,j}$ comme exogenes, et enfin laisser $mig_{s,j,t}$ prendre les valeurs des chocs.
 
 
 _Nota bene sur les données_: les données utilisées dans ce cas sont celles historiques de l'INSEE fusionnées avec les projections du scenario central jusqu'à 2121.
@@ -81,5 +84,5 @@ mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
 writetable(mig_flipped(:, (start:end)+2), 'mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 % la derniere ligne laisse une ligne de plus (sans nom) dans le fichier
 ```
-+	_NB_: Dynare rajoute toujours une periode de plus à $t-1$ pour les simulations.
-Cela change le timing des chocs aussi: un choc prevu à $t\in (12, 15)$ se trouve en vrai en $t\in(12, 16)$
++	_NB_: Dynare rajoute toujours une période de plus à $t-1$ pour les simulations.
+Cela change le timing des chocs aussi: un choc prévu à $t\in (12, 15)$ se trouve en vrai en $t\in(12, 16)$

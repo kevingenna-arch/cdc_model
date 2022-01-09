@@ -686,7 +686,7 @@ shocks;
 @#endfor
 end;
 
-check;
+% check;
 
 %%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perfect_foresight_setup(periods = 100);
