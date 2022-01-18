@@ -194,7 +194,6 @@ pi_Q=1-pi_NQ;
 % double equations, blocs according to skill level
 @#for ql in qualif
 
-
 %%% Demographics
 	
 	% starting population by skill level
@@ -629,7 +628,7 @@ med_Q_17	=	-0.0138986861007415	;
 
 
 c      		=	40;
-y      		=	50;
+y      		=	.2;
 r      		=	0.09;
 kbar   		=	150;
 nbar    	=  	30;
@@ -677,19 +676,20 @@ resid;
 steady;
 % check;
 
+
 %%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 
 @#for j in 2:NLS
 	@#for s in qualif
 		var P_@{s}_@{j};
-		periods 40:79;
+		periods 240:279;
 		values (ppP_@{s}_@{j});
 	@#endfor
 @#endfor
 
 var xpop;
-periods 40:79;
+periods 240:279;
 values (ppxpop);
 
 end;
@@ -697,13 +697,10 @@ end;
 % check;
 
 %%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-perfect_foresight_setup(periods = 100);
-perfect_foresight_solver(maxit = 20, 
+perfect_foresight_setup(periods = 500);
+perfect_foresight_solver(maxit = 10, 
+						 linear_approximation,
 						 minimal_solving_periods = 100);
-
-% save_params_and_steady_state('test_paramss');
-% dynatype('test_dynatype');
-% dynasave('test_dynasave');
 
 
 %%%%% MATLAB commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -713,3 +710,10 @@ simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
 writetable(simuls, 'simuls.csv', 'Delimiter', ';');
 % effacer toute variable auxiliaire
 clear AUX_* ;
+
+% select only matching vars
+matched = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
+mig_shocks = simuls(:, simuls.Properties.VariableNames(matched));
+mig_flipped = rows2vars(mig_shocks);
+mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
+writetable(mig_flipped(:, (240:279)+2), 'mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
