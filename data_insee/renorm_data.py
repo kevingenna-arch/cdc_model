@@ -227,6 +227,10 @@ for i in popdata_norm['classes_norm'].unique():
 plt.legend()
 plt.show()
 
+import seaborn as sns
+sns.lineplot(x='classes_norm', y='pop_norm', hue='cohort', data=popdata_norm.loc[popdata_norm['classes_norm'] != 'xpop'])
+plt.show()
+
 def plotlab(row):
     if row['classes_norm'] in range(1, 8):
         return 'A'
@@ -257,10 +261,107 @@ poplot4 = poplot3.drop(['pop', 'pop_lab'], axis=1) \
                             values='perc') \
                         .reset_index()
 
-fig = plt.figure(figsize=(15,15))
-plt.stackplot(poplot4['cohort'], poplot4['J'], poplot4['A'], poplot4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
-#plt.xticks(rotation = 90)
-fig.autofmt_xdate()
-plt.legend(loc='upper left')
-plt.show()
 
+
+
+
+fig_new_pc = plt.figure(figsize=(16,9))
+plt.stackplot(poplot4['cohort'], poplot4['J'], poplot4['A'], poplot4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+fig_new_pc.autofmt_xdate()
+plt.legend(loc='upper left')
+plt.title('Population par groupe d\'âge en % - INSEE Nov. 2021')
+#plt.show()
+
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_pourc_2021.eps', 
+            format='eps', 
+            dpi=1000)
+
+poplot5 = poplot3 \
+    .drop(['perc', 'pop'], axis=1) \
+        .pivot(index='cohort',
+                columns='lab',
+                values='pop_lab') \
+                    .reset_index()
+
+fig_new_lvl = plt.figure(figsize=(16,9))
+plt.stackplot(poplot5['cohort'], poplot5['J'], poplot5['A'], poplot5['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+fig_new_lvl.autofmt_xdate()
+plt.legend(loc='upper left')
+plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2021')
+#plt.show()
+
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_niveau_2021.eps', 
+            format='eps', 
+            dpi=1000)
+
+#### plots from old data ######################################################
+oldpop = pd.read_excel('H:/Il mio Drive/datawork/Data_Population_old.xlsx',
+                       sheet_name='ww',
+                       skiprows=47,
+                       usecols='A:W',
+                       nrows=41) \
+                           .rename(columns={'Unnamed: 0': 'year', 'Population totale': 'tot'}) \
+                               .melt(id_vars=['year'],
+                                     value_name='pop_norm',
+                                     var_name='age')
+
+backnorm = 3462550
+
+oldpop['pop'] = oldpop['pop_norm']*backnorm
+oldpoptot = oldpop.loc[oldpop['age'] == 'tot']
+oldpop = oldpop.loc[oldpop['age'] != 'tot']
+
+oldpop['cohort'] = oldpop.apply(cohorter, axis=1)
+oldpop['classes'] = oldpop.apply(classing, axis=1)
+oldpop['classes_norm'] = oldpop.apply(classing_norm, axis=1)
+oldpop.drop('classes', axis=1, inplace=True)
+oldpop['lab'] = oldpop.apply(plotlab, axis=1)
+
+plo1 = oldpop \
+    .drop(['pop_norm', 'age', 'year'], axis=1) \
+        .groupby(['cohort', 'lab']) \
+            .sum() \
+                .reset_index(drop=False) \
+                    .rename(columns={'pop': 'pop_lab'})
+
+plo2 = plo1.groupby(['cohort']) \
+                    .sum() \
+                        .reset_index(drop=False) \
+                            .rename(columns={'pop_lab': 'pop'})
+
+plo3 = plo2.merge(plo1, on='cohort')
+plo3['perc'] = plo3['pop_lab'] / plo3['pop']
+plo4 = plo3.drop(['pop', 'pop_lab'], axis=1) \
+                    .pivot(index='cohort',  
+                            columns='lab',  
+                            values='perc') \
+                        .reset_index()
+
+fig_old_pc = plt.figure(figsize=(16,9))
+plt.stackplot(plo4['cohort'], plo4['J'], plo4['A'], plo4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+fig_old_pc.autofmt_xdate()
+plt.legend(loc='upper left')
+plt.title('Population par groupe d\'âge en % - INSEE Nov. 2020')
+#plt.show()
+
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_pourc_2020.eps',
+            format='eps',
+            dpi=1000)
+
+plo5 = plo3 \
+    .drop(['perc', 'pop'], axis=1) \
+        .pivot(index='cohort',
+                columns='lab',
+                values='pop_lab') \
+                    .reset_index()
+
+fig_old_lvl = plt.figure(figsize=(16,9))
+plt.stackplot(plo5['cohort'], plo5['J'], plo5['A'], plo5['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+fig_old_lvl.autofmt_xdate()
+plt.legend(loc='upper left')
+plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2020')
+#plt.show()
+
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_niveau_2020.eps',
+            format='eps',
+            dpi=1000)

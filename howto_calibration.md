@@ -84,5 +84,5 @@ mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
 writetable(mig_flipped(:, (start:end)+2), 'mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 % la derniere ligne laisse une ligne de plus (sans nom) dans le fichier
 ```
-+	_NB_: Dynare rajoute toujours une période de plus à $t-1$ pour les simulations.
++	_NB_: Dynare ajoute toujours une période de plus à $t-1$ pour les simulations.
 Cela change le timing des chocs aussi: un choc prévu à $t\in (12, 15)$ se trouve en vrai en $t\in(12, 16)$
