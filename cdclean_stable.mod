@@ -129,7 +129,6 @@ pi_Q=1-pi_NQ;
 % double equations, blocs according to skill level
 @#for ql in qualif
 
-
 %%% Demographics
 	
 	% starting population by skill level
@@ -623,7 +622,8 @@ tauk 		=	.2;
 A 			= 	1;
 A_Q 		= 	2;
 
-xpop    	=    0.5893;
+% xpop    	=    0.5893;
+xpop    	=    1;
 
 
 end;
@@ -633,5 +633,12 @@ resid;
 steady;
 check;
 
-perfect_foresight_setup(periods = 50);
-perfect_foresight_solver(maxit = 10);
+perfect_foresight_setup(periods = 250);
+perfect_foresight_solver(
+	maxit = 10,
+	linear_approximation
+	);
+
+verbatim;
+simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
+simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
