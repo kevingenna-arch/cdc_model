@@ -7,7 +7,8 @@
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "matrices_chocs.m" 	//%  external file collecting *all* shocks
+@#include "matrices_chocs.m" //
+
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
@@ -33,11 +34,9 @@
 		var beta_@{ql}_@{i};
 	@#endfor
 	% health stock -- CHECK
-	% !!!!!!
-	% @#for i in 2:NLS
-	% 	var h_@{ql}_@{i};
-	% @#endfor
-	% !!!!!!
+	@#for i in 2:NLS
+		var h_@{ql}_@{i};
+	@#endfor
 	% per-period lagrange multiplier - KIM BCs are not consolidated
 	@#for i in 1:NLS
 		var lamda_@{ql}_@{i};   
@@ -47,11 +46,9 @@
 		var pen_@{ql}_@{i};     
 	@#endfor
 	% cohort populations
-	% !!!!!!
-	% @#for i in 1:NLS
-		% var P_@{ql}_@{i} ;
-	% @#endfor
-	% !!!!!!
+	@#for i in 1:NLS
+		var P_@{ql}_@{i} ;
+	@#endfor
 	% welfare function value by age
 	@#for i in 1:NLS
 		var welf_@{ql}_@{i};
@@ -63,8 +60,6 @@
 	% - pi: share of first gen going for edu -- mirroring 
 	var L_@{ql} MPL_@{ql} penind_@{ql} pi_@{ql};
 
-	var P_@{ql}_1;
-
 @#endfor
 
 var Kmig y1 cCheck;
@@ -73,25 +68,6 @@ var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D
 
 %%%%% CALIBRATION SPACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% migration shocks are now endo
-% medical shocks are endo too
-@#for ql in qualif
-	@#for i in 2:NLS
-		var mig_@{ql}_@{i} med_@{ql}_@{i};
-	@#endfor
-@#endfor
-
-% pop level is exo
-% h stock is exo too
-@#for ql in qualif
-	@#for i in 2:NLS
-		varexo P_@{ql}_@{i} h_@{ql}_@{i};
-	@#endfor
-@#endfor
-
-% varexo PTOT;
-% var s_tpop;
-
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A tauf xpop lambb lambbb A_Q;
 
@@ -99,15 +75,14 @@ varexo A tauf xpop lambb lambbb A_Q;
 	% health stock or shocks?
 	varexo h_@{ql}_1;
 
-	% @#for i in 2:NLS
-	% 	% shocks for migration and health stock
-	% 	varexo mig_@{ql}_@{i} med_@{ql}_@{i};
-	% 	varexo med_@{ql}_@{i};
-	% @#endfor
+	@#for i in 2:NLS
+		% shocks for migration and health stock
+		varexo mig_@{ql}_@{i} med_@{ql}_@{i};
+	@#endfor
 
 @#endfor
 
-%%%%% Parameters and values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Parameters and values
 parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 
 @#for ql in qualif
@@ -150,8 +125,6 @@ LS      =   T+Tr;       % total ages
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
 
-% PTOT = Ptot + xpop + s_tpop;
-
 % education choice on recursive discounted welfare
 0=welf_Q_1-welf_NQ_1;
 
@@ -160,6 +133,7 @@ pi_Q=1-pi_NQ;
 
 % double equations, blocs according to skill level
 @#for ql in qualif
+
 
 %%% Demographics
 	
@@ -524,7 +498,7 @@ initval;
 		k_@{ql}_@{i} = 5;
 		lamda_@{ql}_@{i} =1;
 		c_@{ql}_@{i}=1;
-		P_@{ql}_@{i}=.9;
+		P_@{ql}_@{i}=1;
 	@#endfor
 
 	h_@{ql}_1=120;
@@ -595,7 +569,7 @@ med_Q_17	=	-0.0138986861007415	;
 
 
 c      		=	40;
-y      		=	.2;
+y      		=	50;
 r      		=	0.09;
 kbar   		=	150;
 nbar    	=  	30;
@@ -606,8 +580,7 @@ Tk			=	1;
 Tc			=	1;
 Pret		=	5;
 Ptot		=	15;
-% H 			= 	100;
-H 			= 	18;
+H 			= 	100;
 retire 		= 	5;
 penbase		= 	1;
 rd 			=	.09;
@@ -628,33 +601,29 @@ tauk 		=	.2;
 A 			= 	1;
 A_Q 		= 	2;
 
-xpop    	=   1;
+xpop    	=    1;
 
-@#for i in 1:NLS
-	@#for s in qualif
-		P_@{s}_@{i} = .55;
-	@#endfor
-@#endfor
+
 
 
 end;
+
+% resid;
 
 steady;
 
 %%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
-% in simulated series timing is shifted by one period
-% if a shock hits from t=10 to t=15, its position in the 
-% series is t=11 to t=16, retrieved by 11:16 in MTLB
+
 @#for j in 2:NLS
 	@#for s in qualif
-		var P_@{s}_@{j};
+		var mig_@{s}_@{j};
 		periods 240:279;
-		values (s_P_@{s}_@{j});
+		values (s_mig_@{s}_@{j});
 
-		var h_@{s}_@{j};
+		var med_@{s}_@{j};
 		periods 240:279;
-		values (s_h_@{s}_@{j});
+		values (s_med_@{s}_@{j});
 	@#endfor
 @#endfor
 
@@ -662,36 +631,24 @@ var xpop;
 periods 240:279;
 values (s_xpop);
 
-% var PTOT;
-% periods 240:279;
-% values (s_Ptot);
-
 end;
 
 %%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perfect_foresight_setup(periods = 500);
-perfect_foresight_solver(maxit = 10, 
-						 linear_approximation,
-						 minimal_solving_periods = 500);
+perfect_foresight_solver(
+	maxit = 10, 
+	linear_approximation,
+	minimal_solving_periods = 500
+	);
+
+
 
 
 %%%%% MATLAB commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 verbatim;
+% pull all simulations and store them
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
-writetable(simuls, 'simuls.csv', 'Delimiter', ';');
-% effacer toute variable auxiliaire
-clear AUX_* ;
-
-% select only matching vars
-matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
-mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
-mig_flipped = rows2vars(mig_shocks);
-mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-writetable(mig_flipped(:, (240:279)+2), 'mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
-
-matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
-med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
-med_flipped = rows2vars(med_shocks);
-med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-writetable(med_flipped(:, (240:279)+2), 'med_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 'once'));
+simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));

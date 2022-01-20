@@ -272,7 +272,7 @@ plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en % - INSEE Nov. 2021')
 #plt.show()
 
-plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_pourc_2021.eps', 
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/plots/pop_pourc_2021.eps', 
             format='eps', 
             dpi=1000)
 
@@ -290,7 +290,7 @@ plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2021')
 #plt.show()
 
-plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_niveau_2021.eps', 
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/plots/pop_niveau_2021.eps', 
             format='eps', 
             dpi=1000)
 
@@ -344,7 +344,7 @@ plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en % - INSEE Nov. 2020')
 #plt.show()
 
-plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_pourc_2020.eps',
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/plots/pop_pourc_2020.eps',
             format='eps',
             dpi=1000)
 
@@ -362,6 +362,6 @@ plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2020')
 #plt.show()
 
-plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/pop_niveau_2020.eps',
+plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/plots/pop_niveau_2020.eps',
             format='eps',
             dpi=1000)

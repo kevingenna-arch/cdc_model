@@ -1,7 +1,0 @@
-%% Blueprint for building up aggregate matrices with relevant info
-verbatim;
-pensione = [
-@#for u in 1:NLS
- 	welf_Q_@{u} ...
- @#endfor
-];
