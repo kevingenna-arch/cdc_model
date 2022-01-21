@@ -640,7 +640,7 @@ xpop    	=   1;
 end;
 
 steady;
-
+./output/
 %%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 % in simulated series timing is shifted by one period
@@ -679,7 +679,7 @@ perfect_foresight_solver(maxit = 10,
 verbatim;
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
-writetable(simuls, 'simuls.csv', 'Delimiter', ';');
+writetable(simuls, './output/simuls.csv', 'Delimiter', ';');
 % effacer toute variable auxiliaire
 clear AUX_* ;
 
@@ -688,10 +688,10 @@ matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_'
 mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
 mig_flipped = rows2vars(mig_shocks);
 mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-writetable(mig_flipped(:, (240:279)+2), 'mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 
 matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
 med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
 med_flipped = rows2vars(med_shocks);
 med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-writetable(med_flipped(:, (240:279)+2), 'med_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+writetable(med_flipped(:, (240:279)+2), './output/med_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
