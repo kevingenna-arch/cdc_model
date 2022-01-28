@@ -7,6 +7,8 @@
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
+@#include "matrices_chocs.m" //
+
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
@@ -64,6 +66,8 @@ var Kmig y1 cCheck;
 
 var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D lambc Defratio Dratio Gratio Penratio Edratio Tkratio Tcratio Twratio rhop tauw tauk tauc v;
 
+%%%%% CALIBRATION SPACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A tauf xpop lambb lambbb A_Q;
 
@@ -117,6 +121,7 @@ T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
 
+
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
 
@@ -128,6 +133,7 @@ pi_Q=1-pi_NQ;
 
 % double equations, blocs according to skill level
 @#for ql in qualif
+
 
 %%% Demographics
 	
@@ -492,7 +498,7 @@ initval;
 		k_@{ql}_@{i} = 5;
 		lamda_@{ql}_@{i} =1;
 		c_@{ql}_@{i}=1;
-		P_@{ql}_@{i}=.9;
+		P_@{ql}_@{i}=1;
 	@#endfor
 
 	h_@{ql}_1=120;
@@ -519,39 +525,12 @@ initval;
 @#endfor
 
 
-mig_NQ_2	=	0.455175185711674	;
-mig_NQ_3	=	0.348394685526794	;
-mig_NQ_4	=	0.395840507124491	;
-mig_NQ_5	=	0.353570128581158	;
-mig_NQ_6	=	0.301831331248066	;
-mig_NQ_7	=	0.313889015307074	;
-mig_NQ_8	=	0.264746443288438	;
-mig_NQ_9	=	0.237480784846447	;
-mig_NQ_10	=	0.183183647039420	;
-mig_NQ_11	=	0.139663033489348	;
-mig_NQ_12	=	0.0818078074582580	;
-mig_NQ_13	=	0.0399838025824241	;
-mig_NQ_14	=	0.0123190699537774	;
-mig_NQ_15	=	0.00227018225989047	;
-mig_NQ_16	=	0.000240660078663681	;
-mig_NQ_17	=	1.54557038047252e-05	;
-			
-mig_Q_2		=	0.455175185711674	;
-mig_Q_3		=	0.348394685526794	;
-mig_Q_4		=	0.395840507124491	;
-mig_Q_5		=	0.353570128581158	;
-mig_Q_6		=	0.301831331248066	;
-mig_Q_7		=	0.313889015307074	;
-mig_Q_8		=	0.264746443288438	;
-mig_Q_9		=	0.237480784846447	;
-mig_Q_10	=	0.183183647039420	;
-mig_Q_11	=	0.139663033489348	;
-mig_Q_12	=	0.0818078074582580	;
-mig_Q_13	=	0.0399838025824241	;
-mig_Q_14	=	0.0123190699537774	;
-mig_Q_15	=	0.00227018225989047	;
-mig_Q_16	=	0.000240660078663681	;
-mig_Q_17	=	1.54557038047252e-05	;
+@#for j in 2:NLS
+	@#for s in qualif
+		mig_@{s}_@{j} = 0;
+	@#endfor
+@#endfor
+
 			
 			
 med_NQ_2	=	-87.6010494357028	;
@@ -622,23 +601,55 @@ tauk 		=	.2;
 A 			= 	1;
 A_Q 		= 	2;
 
-% xpop    	=    0.5893;
 xpop    	=    1;
+
+
 
 
 end;
 
-resid;
+% resid;
 
 steady;
-check;
 
-perfect_foresight_setup(periods = 250);
+%%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+shocks;
+
+@#for j in 2:NLS
+	@#for s in qualif
+		var mig_@{s}_@{j};
+		periods 240:279;
+		values (s_old_mig_@{s}_@{j});
+
+		var med_@{s}_@{j};
+		periods 240:279;
+		values (s_old_med_@{s}_@{j});
+	@#endfor
+@#endfor
+
+var xpop;
+periods 240:279;
+values (s_oldxpop);
+
+end;
+
+%%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
-	% linear_approximation,
-    maxit = 10	
+	maxit = 10, 
+	linear_approximation,
+	minimal_solving_periods = 500
 	);
 
+
+
+
+%%%%% MATLAB commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 verbatim;
+% pull all simulations and store them
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
+match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 'once'));
+simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
+clear AUX_*
