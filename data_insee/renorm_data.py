@@ -3,6 +3,7 @@ import numpy as np
 #from plotnine import *
 import matplotlib.pyplot as plt
 
+
 ### Custom functions
 def classing(row):
     if row['age'] in range(0,5):
@@ -219,17 +220,17 @@ popdata_total = popdata_norm \
 popdata_total.to_excel('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/popdata_total.xlsx', index=False)
 
 #### test area for plots ######################################################
-fig, ax = plt.subplots(figsize=(15,10))
-for i in popdata_norm['classes_norm'].unique():
-    ss = popdata_norm.loc[popdata_norm['classes_norm'] == i]
-    plt.plot(ss['cohort'], ss['pop_norm'], label=i)
-
-plt.legend()
-plt.show()
-
-import seaborn as sns
-sns.lineplot(x='classes_norm', y='pop_norm', hue='cohort', data=popdata_norm.loc[popdata_norm['classes_norm'] != 'xpop'])
-plt.show()
+#fig, ax = plt.subplots(figsize=(15,10))
+#for i in popdata_norm['classes_norm'].unique():
+#    ss = popdata_norm.loc[popdata_norm['classes_norm'] == i]
+#    plt.plot(ss['cohort'], ss['pop_norm'], label=i)
+#
+#plt.legend()
+#plt.show()
+#
+#import seaborn as sns
+#sns.lineplot(x='classes_norm', y='pop_norm', hue='cohort', data=popdata_norm.loc[popdata_norm['classes_norm'] != 'xpop'])
+#plt.show()
 
 def plotlab(row):
     if row['classes_norm'] in range(1, 8):
@@ -268,6 +269,7 @@ poplot4 = poplot3.drop(['pop', 'pop_lab'], axis=1) \
 fig_new_pc = plt.figure(figsize=(16/1.5,9/1.5))
 plt.stackplot(poplot4['cohort'], poplot4['J'], poplot4['A'], poplot4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
 fig_new_pc.autofmt_xdate()
+plt.grid(axis='both', alpha=0.5)
 plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en % - INSEE Nov. 2021')
 #plt.show()
@@ -287,6 +289,9 @@ fig_new_lvl = plt.figure(figsize=(16/1.5,9/1.5))
 plt.stackplot(poplot5['cohort'], poplot5['J'], poplot5['A'], poplot5['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
 fig_new_lvl.autofmt_xdate()
 plt.legend(loc='upper left')
+plt.locator_params(axis='x', nbins=10)
+plt.grid(axis='both', alpha=0.5)
+#plt.yscale('log')
 plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2021')
 #plt.show()
 
@@ -317,6 +322,7 @@ oldpop['classes_norm'] = oldpop.apply(classing_norm, axis=1)
 oldpop.drop('classes', axis=1, inplace=True)
 oldpop['lab'] = oldpop.apply(plotlab, axis=1)
 
+
 plo1 = oldpop \
     .drop(['pop_norm', 'age', 'year'], axis=1) \
         .groupby(['cohort', 'lab']) \
@@ -340,6 +346,7 @@ plo4 = plo3.drop(['pop', 'pop_lab'], axis=1) \
 fig_old_pc = plt.figure(figsize=(16/1.5,9/1.5))
 plt.stackplot(plo4['cohort'], plo4['J'], plo4['A'], plo4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
 fig_old_pc.autofmt_xdate()
+plt.grid(axis='both', alpha=0.5)
 plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en % - INSEE Nov. 2020')
 #plt.show()
@@ -358,6 +365,7 @@ plo5 = plo3 \
 fig_old_lvl = plt.figure(figsize=(16/1.5,9/1.5))
 plt.stackplot(plo5['cohort'], plo5['J'], plo5['A'], plo5['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
 fig_old_lvl.autofmt_xdate()
+plt.grid(axis='both', alpha=0.5)
 plt.legend(loc='upper left')
 plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2020')
 #plt.show()
@@ -365,3 +373,25 @@ plt.title('Population par groupe d\'âge en niveau - INSEE Nov. 2020')
 plt.savefig('D:/emanu/OneDrive/Matlab/cdc_model/plots/pop_niveau_2020.eps',
             format='eps',
             dpi=1000)
+
+#### reaggregate data ########################################################
+
+oldpop_sum = oldpop[['pop', 'cohort', 'classes_norm']] \
+        .groupby(['cohort', 'classes_norm']) \
+            .sum() \
+                .reset_index(drop=False) \
+
+
+oldxpop = oldpop_sum.loc[(oldpop_sum['cohort'] == '2000-2005') & 
+                                    (oldpop_sum['classes_norm'] == 'xpop')] \
+                                        .loc[:, 'pop'].values[0]
+
+oldpop_sum['pop_norm2000'] = oldpop_sum['pop'] / oldxpop
+
+oldpop_sum_wide = oldpop_sum \
+    .pivot(index='classes_norm',
+           columns='cohort',
+           values='pop_norm2000') \
+               .reset_index(drop=False)
+
+oldpop_sum_wide.to_excel('D:/emanu/OneDrive/Matlab/cdc_model/data_insee/popdata_norm_wide_olddata.xlsx', index = False)

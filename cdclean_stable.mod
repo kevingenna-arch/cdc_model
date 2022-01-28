@@ -635,8 +635,8 @@ check;
 
 perfect_foresight_setup(periods = 250);
 perfect_foresight_solver(
-	maxit = 10,
-	linear_approximation
+	linear_approximation,
+    maxit = 10	
 	);
 
 verbatim;
