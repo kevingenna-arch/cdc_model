@@ -640,7 +640,7 @@ xpop    	=   1;
 end;
 
 steady;
-save_params_and_steady_state('steady_calib_phexo');
+save_params_and_steady_state('./output/ss_fullcdc_pophexo.txt');
 
 %%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
@@ -671,8 +671,8 @@ end;
 
 %%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perfect_foresight_setup(periods = 500);
-perfect_foresight_solver(maxit = 10, 
-						 linear_approximation,
+perfect_foresight_solver(maxit = 4, 
+						 % linear_approximation,
 						 minimal_solving_periods = 500);
 
 

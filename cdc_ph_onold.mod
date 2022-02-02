@@ -653,5 +653,3 @@ simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
 match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 'once'));
 simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
 clear AUX_*
-
-%%%% NOOOO NEEDS TO WORK ON other file!!!!
