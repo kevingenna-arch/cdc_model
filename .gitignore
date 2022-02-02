@@ -9,7 +9,7 @@ cdc/
 *_results.mat
 tests/
 *.sublime-*
-
+paster.txt
 
 
 ### Julia ###
