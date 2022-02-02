@@ -640,7 +640,8 @@ xpop    	=   1;
 end;
 
 steady;
-./output/
+save_params_and_steady_state('steady_calib_phexo');
+
 %%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 % in simulated series timing is shifted by one period
