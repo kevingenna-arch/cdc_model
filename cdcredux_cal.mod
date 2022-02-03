@@ -211,7 +211,6 @@ periods 240:279;
 values (s_xpop);
 end;
 
-% model_diagnostics;
 perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
     maxit = 10	
@@ -226,14 +225,14 @@ clear AUX_* match_aux
 
 %% storing away shocks
 % select only matching vars
-% matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
-% mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
-% mig_flipped = rows2vars(mig_shocks);
-% mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-% writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
+mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
+mig_flipped = rows2vars(mig_shocks);
+mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
+writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 
-% matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
-% med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
-% med_flipped = rows2vars(med_shocks);
-% med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-% writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
+med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
+med_flipped = rows2vars(med_shocks);
+med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
+writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);

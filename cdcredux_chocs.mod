@@ -178,7 +178,7 @@ load_params_and_steady_state('./output/ss_cdcsimple_ph_STABLE.txt');
 resid;
 
 steady;
-save_params_and_steady_state('./output/ss_cdcsimple_ph_ENDO.txt');
+save_params_and_steady_state('./output/ss_cdcredux_ph_ENDO.txt');
 
 shocks;
 
@@ -186,11 +186,11 @@ shocks;
 	@#for s in qualif
 		var mig_@{s}_@{j};
 		periods 240:279;
-		values (s_mig_@{s}_@{j});
+		values (.1*s_mig_@{s}_@{j});
 
 		var med_@{s}_@{j};
 		periods 240:279;
-		values (s_med_@{s}_@{j});
+		values (50+s_med_@{s}_@{j});
 	@#endfor
 @#endfor
 
@@ -202,7 +202,7 @@ end;
 
 perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
-	linear_approximation,
+	% linear_approximation,
     maxit = 10	
 	);
 
