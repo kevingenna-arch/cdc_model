@@ -13,17 +13,17 @@
 % endogenous vars from agents' maxing programs, by skill level
 @#for ql in qualif
 	% health stock -- CHECK
-	@#for j in 1:NLS
-		var h_@{ql}_@{j};
+	@#for j in 2:NLS
+		var beta_@{ql}_@{j};
 	@#endfor
 	% aggregates by skill class:
 	% -	L: aggregate labour
 	% - pi: share of first gen going for edu -- mirroring 
 	var L_@{ql} pi_@{ql};
-	% var P_@{ql}_1;
+	var P_@{ql}_1;
 
 
-	@#for i in 1:NLS
+	@#for i in 2:NLS
 		% shocks for migration and health stock
 		var mig_@{ql}_@{i} med_@{ql}_@{i};
 	@#endfor
@@ -43,11 +43,11 @@ varexo A A_Q xpop;
 	% 	varexo mig_@{ql}_@{i} med_@{ql}_@{i};
 	% @#endfor
 
-	@#for i in 2:NLS
-		varexo beta_@{ql}_@{i};
+	@#for i in 1:NLS
+		varexo h_@{ql}_@{i};
 	@#endfor
 	% cohort populations
-	@#for i in 1:NLS
+	@#for i in 2:NLS
 		varexo P_@{ql}_@{i} ;
 	@#endfor
 
@@ -105,7 +105,7 @@ pi_Q=1-pi_NQ;
 %%% Demographics
 	
 	% starting population by skill level
-	P_@{ql}_1=pi_@{ql}*xpop + mig_@{ql}_1;
+	P_@{ql}_1=pi_@{ql}*xpop;
 
 	@#for i in 2:NLS
 		% second cohort onwards, population dynamics
@@ -176,42 +176,10 @@ cCheck = Ptot - Pret - (
 
 end;
 
+%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % initvals and SS values from plain file
 load_params_and_steady_state('./output/ss_cdcsimple_ph_STABLE.txt');
-%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% initval;
-% % % initival provides initial guesses for solving for the actual SS
-% % % which can differ from initial values
 
-% @#for ql in qualif
-
-% 	@#for i in 1:NLS
-% 		P_@{ql}_@{i}=.4;
-% 	@#endfor
-
-% 	h_@{ql}_1=10;
-% 	@#for i in 2:NLS
-% 		beta_@{ql}_@{i}=.95;
-% 		h_@{ql}_@{i}=9;
-% 	@#endfor
-% 	L_@{ql}=5;
-% @#endfor
-
-% H = 56;
-% nbar = 3;
-% y = 2;
-
-% pi_NQ = .7;
-% pi_Q = .3;
-% Pret = 2;
-% Ptot = 8;
-% cCheck = 0;
-
-
-
-% end;
-
-% resid;
 
 steady;
 save_params_and_steady_state('./output/ss_cdcsimple_ph_EXO.txt');
@@ -223,11 +191,18 @@ shocks;
 	@#for s in qualif
 		var P_@{s}_@{j};
 		periods 240:279;
-		values (s_P_@{s}_@{j});
 
-		var beta_@{s}_@{j};
+		@#if old == 1
+		values (s_old_P_@{s}_@{j});
+		@#endif
+
+		@#if old == 0
+		values (s_P_@{s}_@{j});
+		@#endif
+
+		var h_@{s}_@{j};
 		periods 240:279;
-		values (s_h_@{s}_@{j});
+		values (100*s_h_@{s}_@{j});
 	@#endfor
 @#endfor
 
@@ -236,10 +211,9 @@ periods 240:279;
 values (s_xpop);
 end;
 
-model_diagnostics;
+% model_diagnostics;
 perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
-	% linear_approximation,
     maxit = 10	
 	);
 
@@ -249,3 +223,17 @@ simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
 match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 'once'));
 simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
 clear AUX_* match_aux
+
+%% storing away shocks
+% select only matching vars
+% matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
+% mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
+% mig_flipped = rows2vars(mig_shocks);
+% mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
+% writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+
+% matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
+% med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
+% med_flipped = rows2vars(med_shocks);
+% med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
+% writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
