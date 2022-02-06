@@ -83,14 +83,14 @@ lnq_o = simuls_old.L_NQ(241:280, :);
 %% Figures
 fig_redux_pib = figure(2);
 plot(yrs, pib_n, '+-', ...
-     yrs, pib_o, '*-');
+     yrs, pib_o, 'o-');
 % title('PIB: modele demosante');
 legend('Actuelle','Precedente','location','best');
 saveas(fig_redux_pib, './plots/redux_pib.eps', 'epsc');
 
 fig_redux_popret = figure(3);
 plot(yrs, popret_n, '+-', ...
-     yrs, popret_o, '*-');
+     yrs, popret_o, 'o-');
 % title('Pop. à la retraite: modele demosante');
 legend('Actuelle','Precedente','location','best');
 saveas(fig_redux_popret, './plots/redux_popret.eps', 'epsc');
@@ -98,7 +98,7 @@ saveas(fig_redux_popret, './plots/redux_popret.eps', 'epsc');
 
 fig_redux_totpop = figure(4);
 plot(yrs, poptot_n, '+-', ...
-     yrs, poptot_o, '*-');
+     yrs, poptot_o, 'o-');
 % title('Population totale: modele demosante');
 legend('Actuelle','Precedente','location','best');
 saveas(fig_redux_totpop, './plots/redux_poptot.eps', 'epsc');
@@ -106,7 +106,7 @@ saveas(fig_redux_totpop, './plots/redux_poptot.eps', 'epsc');
 
 fig_redux_sante = figure(5);
 plot(yrs, sante_n, '+-', ...
-     yrs, sante_o, '*-');
+     yrs, sante_o, 'o-');
 % title('Stock de santé: modele demosanté');
 legend('Actuelle','Precedente','location','best');
 saveas(fig_redux_sante, './plots/redux_sante.eps', 'epsc');
@@ -114,7 +114,7 @@ saveas(fig_redux_sante, './plots/redux_sante.eps', 'epsc');
 
 fig_redux_nbar = figure(6);
 plot(yrs, nbar_n, '+-', ...
-     yrs, nbar_o, '*-');
+     yrs, nbar_o, 'o-');
 % title('Force travail effective: modele demosanté');
 legend('Actuelle','Precedente','location','best');
 saveas(fig_redux_nbar, './plots/redux_nbar.eps', 'epsc');
@@ -124,11 +124,11 @@ plot(yrs, lq_n, '+-', ...
      yrs, lq_o, '*-', ...
      yrs, lnq_n, 'x-', ...
      yrs, lnq_o, 'o-');
-title('Pariticipation au marché du travail');
+% title('Pariticipation au marché du travail');
 legend('Qualifiés: Actuelle', 'Qualifiés: Precedente', ... 
     'Non Qualifiés: Actuelle', 'Non Qualifiés: Precedente', ...
     'location', 'best');
-% saveas(fig_redux_lab, './plots/redux_lab.eps', 'epsc');
+saveas(fig_redux_lab, './plots/redux_lab.eps', 'epsc');
 
 % Plots d'ES
 % Ps
@@ -155,23 +155,23 @@ cts = (1:17)';
 fig_redux_es = figure(8);
 
 subplot(1, 3, 1);
-plot(cts, 1 + pop_es_nq, '+', ...
-     cts, 1 + pop_es_q, '*');
+plot(cts, pop_es_nq, '+', ...
+     cts, pop_es_q, 'o');
 % title('Etat Stationnaire: Repartition entre Qualifés et Non Qualifé');
-legend('Pop. Qualif.', 'Pop. Non Qualif.', 'location', 'best');
+legend('Pop. Non Qualif.', 'Pop. Qualif.', 'location', 'best');
 
 subplot(1, 3, 2);
 plot((2:17)', beta_es_nq, '+', ...
-     (2:17)', beta_es_q, '*');
+     (2:17)', beta_es_q, 'o');
 % title('Etat Stationnaire: Esperance de survie, Qualifés et Non Qualifé');
-legend('$\beta$ Qualif.', '$\beta$ Non Qualif.', ...
+legend('$\beta$ Non Qualif.', '$\beta$ Qualif.', ...
        'location', 'best', ...
        'interpreter','latex');
 
 subplot(1, 3, 3);
 plot(cts, sante_es_nq, '+', ...
-     cts, sante_es_q, '*');
+     cts, sante_es_q, 'o');
 % title('Etat Stationnaire: Stock de Santé Qualifés et Non Qualifé');
-legend('Qualif.', 'Non Qualif.', 'location', 'best');
+legend('Non Qualif.', 'Qualif.', 'location', 'best');
 
 saveas(fig_redux_es, './plots/redux_es.eps', 'epsc');
