@@ -612,7 +612,6 @@ end;
 
 steady;
 save_params_and_steady_state('steady_calib_phendo');
-
 %%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 

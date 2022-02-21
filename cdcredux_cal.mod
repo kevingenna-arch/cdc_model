@@ -182,15 +182,17 @@ load_params_and_steady_state('./output/ss_cdcsimple_ph_STABLE.txt');
 
 
 steady;
+/*
 save_params_and_steady_state('./output/ss_cdcsimple_ph_EXO.txt');
-
+*/
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 
 @#for j in 2:NLS
 	@#for s in qualif
 		var P_@{s}_@{j};
-		periods 240:279;
+		% periods 240:279;
+		periods 1:40;
 
 		@#if old == 1
 		values (s_old_P_@{s}_@{j});
@@ -201,21 +203,23 @@ shocks;
 		@#endif
 
 		var h_@{s}_@{j};
-		periods 240:279;
+		% periods 240:279;
+		periods 1:40;
 		values (100*s_h_@{s}_@{j});
 	@#endfor
 @#endfor
 
 var xpop;
-periods 240:279;
+% periods 240:279;
+periods 1:40;
 values (s_xpop);
 end;
 
-perfect_foresight_setup(periods = 500);
+% perfect_foresight_setup(periods = 500);
+perfect_foresight_setup(periods = 100);
 perfect_foresight_solver(
     maxit = 10	
 	);
-
 verbatim;
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
@@ -223,16 +227,18 @@ match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 
 simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
 clear AUX_* match_aux
 
-%% storing away shocks
-% select only matching vars
-matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
-mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
-mig_flipped = rows2vars(mig_shocks);
-mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+% /*
+% %% storing away shocks
+% % select only matching vars
+% matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
+% mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
+% mig_flipped = rows2vars(mig_shocks);
+% mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
+% writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 
-matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
-med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
-med_flipped = rows2vars(med_shocks);
-med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+% matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
+% med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
+% med_flipped = rows2vars(med_shocks);
+% med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
+% writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+% */
