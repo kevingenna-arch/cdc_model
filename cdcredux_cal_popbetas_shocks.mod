@@ -173,65 +173,23 @@ cCheck = Ptot - Pret - (
 
 end;
 
-
-
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-initval;
-% initival provides initial guesses for solving for the actual SS
-% which can differ from initial values
-
-@#for ql in qualif
-
-	@#for i in 1:NLS
-		P_@{ql}_@{i}=1;
-	@#endfor
-
-	h_@{ql}_1=100;
-	@#for i in 2:NLS
-		beta_@{ql}_@{i}=.9;
-		h_@{ql}_@{i}=100;
-	@#endfor
-	L_@{ql}=1.25;
-
-@#endfor
-
-H = 3000;
-nbar = 1.5;
-A = 1;
-A_Q = 2;
-xpop = 1;
-
-pi_NQ = .7;
-pi_Q = .3;
-y = 1.5;
-Ptot = 3;
-cCheck = 0;
-
-
-end;
-
-% resid;
+% initvals and SS values from plain file
+load_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
+save_params_and_steady_state('./output/ss_cdcredux_popbetas_CHOCS.txt');
 
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 
 @#for j in 2:NLS
 	@#for s in qualif
-		var P_@{s}_@{j};
+		var mig_@{s}_@{j};
 		periods 240:279;
+		values (s_mig_@{s}_@{j});
 
-		@#if old == 1
-		values (s_old_P_@{s}_@{j});
-		@#endif
-
-		@#if old == 0
-		values (s_P_@{s}_@{j});
-		@#endif
-
-		var beta_@{s}_@{j};
+		var med_@{s}_@{j};
 		periods 240:279;
 		values (1*s_h_@{s}_@{j});
 	@#endfor

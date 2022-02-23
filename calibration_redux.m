@@ -1,3 +1,6 @@
+%%%%%% Script pour la note de fevrier 2022
+
+
 %% Only population model
 % compares the path for output embedding 
 % a skeletal production function
