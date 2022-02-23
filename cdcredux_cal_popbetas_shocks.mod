@@ -1,4 +1,6 @@
 %%%%% CDC clean ################################################################
+% version avec P_ et beta_ endogenes, chocs produits par `cdcredux_cal_popbetas.mod`
+% les chocs touchent les valeur de P_ et 
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
@@ -7,51 +9,44 @@
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "matrices_chocs.m" 	//
+@#include "matrices_chocs.m" 	//%  load up shocks externally
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
 @#for ql in qualif
+	% survival discount factor between periods-- CHECK
+	@#for i in 2:NLS
+		var beta_@{ql}_@{i};
+	@#endfor
 	% health stock -- CHECK
-	@#for j in 2:NLS
-		var h_@{ql}_@{j};
+	@#for i in 2:NLS
+		var h_@{ql}_@{i};
+	@#endfor
+	% cohort populations
+	@#for i in 1:NLS
+		var P_@{ql}_@{i} ;
 	@#endfor
 	% aggregates by skill class:
 	% -	L: aggregate labour
 	% - pi: share of first gen going for edu -- mirroring 
 	var L_@{ql} pi_@{ql};
-	var P_@{ql}_1;
-
-
-	@#for i in 2:NLS
-		% shocks for migration and health stock
-		var mig_@{ql}_@{i} med_@{ql}_@{i};
-	@#endfor
 
 @#endfor
 
 var y nbar Ptot Pret H;
 var cCheck;
-% var junk;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A A_Q xpop;
 
 @#for ql in qualif
-	% @#for i in 2:NLS
-	% 	% shocks for migration and health stock
-	% 	varexo mig_@{ql}_@{i} med_@{ql}_@{i};
-	% @#endfor
-
-	@#for i in 2:NLS
-		varexo beta_@{ql}_@{i};
-	@#endfor
-	% cohort populations
-	@#for i in 2:NLS
-		varexo P_@{ql}_@{i} ;
-	@#endfor
-
+	% health stock or shocks?
 	varexo h_@{ql}_1;
+
+	@#for i in 2:NLS
+		% shocks for migration and health stock
+		varexo mig_@{ql}_@{i} med_@{ql}_@{i};
+	@#endfor
 
 @#endfor
 
@@ -96,7 +91,7 @@ LS      =   T+Tr;       % total ages
 
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
-% junk=0.9*junk(+1);
+
 
 pi_NQ=.7;
 pi_Q=1-pi_NQ;
@@ -115,7 +110,7 @@ pi_Q=1-pi_NQ;
 		% health stock dynamics
 		h_@{ql}_@{i} =  (1-deltah)*h_@{ql}_@{i-1}(-1) + med_@{ql}_@{i};
 		% health dynamics and survival probs
-		h_@{ql}_@{i}*beta_@{ql}_@{i} = h_@{ql}_@{i} - 1;
+		h_@{ql}_@{i} = (1-beta_@{ql}_@{i})^(-1);
 	@#endfor
 
 @#endfor
@@ -155,7 +150,7 @@ y = A * nbar^alp;
 
 % tot agg labour 
 % depends on health stock
-nbar = (H(-1)^phi)*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
 % total labour by skill
 % accounts for number and prod
@@ -178,13 +173,47 @@ cCheck = Ptot - Pret - (
 
 end;
 
-%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% initvals and SS values from plain file
-load_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
 
+
+%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+initval;
+% initival provides initial guesses for solving for the actual SS
+% which can differ from initial values
+
+@#for ql in qualif
+
+	@#for i in 1:NLS
+		P_@{ql}_@{i}=1;
+	@#endfor
+
+	h_@{ql}_1=100;
+	@#for i in 2:NLS
+		beta_@{ql}_@{i}=.9;
+		h_@{ql}_@{i}=100;
+	@#endfor
+	L_@{ql}=1.25;
+
+@#endfor
+
+H = 3000;
+nbar = 1.5;
+A = 1;
+A_Q = 2;
+xpop = 1;
+
+pi_NQ = .7;
+pi_Q = .3;
+y = 1.5;
+Ptot = 3;
+cCheck = 0;
+
+
+end;
+
+% resid;
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetas_ENDO.txt');
+save_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
 
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
@@ -213,28 +242,17 @@ periods 240:279;
 values (s_xpop);
 end;
 
-perfect_foresight_setup(periods = 500);
+%%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(
 	% linear_approximation,
     maxit = 10	
 	);
+
+%%%%% Matlab commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 verbatim;
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
 match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 'once'));
 simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
 clear AUX_* match_aux
-
-%% storing away shocks
-% select only matching vars
-matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
-mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
-mig_flipped = rows2vars(mig_shocks);
-mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
-
-matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
-med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
-med_flipped = rows2vars(med_shocks);
-med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);

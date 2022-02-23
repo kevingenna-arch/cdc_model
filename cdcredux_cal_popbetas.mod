@@ -1,4 +1,8 @@
 %%%%% CDC clean ################################################################
+% version avec P_ et beta_ exogenes, introduisant les chocs suivants:
+%	- s_P_*_* pour la popolation de differentes classes d'age et qualif
+%	- s_h_*_* pour les probabilitès de survie, imputées aux beta_*_*
+
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
@@ -113,7 +117,7 @@ pi_Q=1-pi_NQ;
 		% health stock dynamics
 		h_@{ql}_@{i} =  (1-deltah)*h_@{ql}_@{i-1}(-1) + med_@{ql}_@{i};
 		% health dynamics and survival probs
-		h_@{ql}_@{i}*beta_@{ql}_@{i} = h_@{ql}_@{i} - 1;
+		h_@{ql}_@{i} = (1-beta_@{ql}_@{i})^(-1);
 	@#endfor
 
 @#endfor
@@ -211,11 +215,15 @@ periods 240:279;
 values (s_xpop);
 end;
 
+
+%%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
 	% linear_approximation,
     maxit = 10	
 	);
+
+%%%%% Matlab commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 verbatim;
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
