@@ -7,7 +7,7 @@
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "matrices_chocs.m" //
+@#include "matrices_chocs.m" 	//%  load up shocks externally
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
@@ -82,7 +82,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   0;          %
+phi     =   .5;         % productivity effect for health
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
@@ -211,7 +211,7 @@ end;
 % resid;
 
 steady;
-save_params_and_steady_state('./output/ss_cdcsimple_ph_STABLE.txt');
+save_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
 
 perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(

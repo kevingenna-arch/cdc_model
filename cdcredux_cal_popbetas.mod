@@ -7,14 +7,14 @@
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "matrices_chocs.m" 	//
+@#include "matrices_chocs.m" 	//%  load up shocks externally 
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
 @#for ql in qualif
 	% health stock -- CHECK
 	@#for j in 2:NLS
-		var beta_@{ql}_@{j};
+		var h_@{ql}_@{j};
 	@#endfor
 	% aggregates by skill class:
 	% -	L: aggregate labour
@@ -32,7 +32,6 @@
 
 var y nbar Ptot Pret H;
 var cCheck;
-% var junk;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A A_Q xpop;
@@ -43,13 +42,15 @@ varexo A A_Q xpop;
 	% 	varexo mig_@{ql}_@{i} med_@{ql}_@{i};
 	% @#endfor
 
-	@#for i in 1:NLS
-		varexo h_@{ql}_@{i};
+	@#for i in 2:NLS
+		varexo beta_@{ql}_@{i};
 	@#endfor
 	% cohort populations
 	@#for i in 2:NLS
 		varexo P_@{ql}_@{i} ;
 	@#endfor
+
+	varexo h_@{ql}_1;
 
 @#endfor
 
@@ -87,14 +88,13 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   0;          %
+phi     =   .5;         % productivity effect for health
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
 
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
-% junk=0.9*junk(+1);
 
 pi_NQ=.7;
 pi_Q=1-pi_NQ;
@@ -153,7 +153,7 @@ y = A * nbar^alp;
 
 % tot agg labour 
 % depends on health stock
-nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar = (H(-1)^phi)*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
 % total labour by skill
 % accounts for number and prod
@@ -178,21 +178,19 @@ end;
 
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % initvals and SS values from plain file
-load_params_and_steady_state('./output/ss_cdcsimple_ph_STABLE.txt');
+load_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
 
 
 steady;
-/*
-save_params_and_steady_state('./output/ss_cdcsimple_ph_EXO.txt');
-*/
+save_params_and_steady_state('./output/ss_cdcredux_popbetas_EXO.txt');
+
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
 
 @#for j in 2:NLS
 	@#for s in qualif
 		var P_@{s}_@{j};
-		% periods 240:279;
-		periods 1:40;
+		periods 240:279;
 
 		@#if old == 1
 		values (s_old_P_@{s}_@{j});
@@ -202,22 +200,20 @@ shocks;
 		values (s_P_@{s}_@{j});
 		@#endif
 
-		var h_@{s}_@{j};
-		% periods 240:279;
-		periods 1:40;
-		values (100*s_h_@{s}_@{j});
+		var beta_@{s}_@{j};
+		periods 240:279;
+		values (1*s_h_@{s}_@{j});
 	@#endfor
 @#endfor
 
 var xpop;
-% periods 240:279;
-periods 1:40;
+periods 240:279;
 values (s_xpop);
 end;
 
-% perfect_foresight_setup(periods = 500);
-perfect_foresight_setup(periods = 100);
+perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
+	% linear_approximation,
     maxit = 10	
 	);
 verbatim;
@@ -227,18 +223,16 @@ match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 
 simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
 clear AUX_* match_aux
 
-% /*
-% %% storing away shocks
-% % select only matching vars
-% matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
-% mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
-% mig_flipped = rows2vars(mig_shocks);
-% mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-% writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+%% storing away shocks
+% select only matching vars
+matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
+mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
+mig_flipped = rows2vars(mig_shocks);
+mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
+writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
 
-% matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
-% med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
-% med_flipped = rows2vars(med_shocks);
-% med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-% writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
-% */
+matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
+med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
+med_flipped = rows2vars(med_shocks);
+med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
+writetable(med_flipped(:, (240:279)+2), './output/med_shocks_redux.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);

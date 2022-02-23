@@ -22,6 +22,8 @@ yrs = [1900:5:2095];
 %% PIB
 pib_n_demo = simuls_new_demo.y(241:280, :);
 pib_o_demo = simuls_old_demo.y(241:280, :);
+popdemo_n = simuls_new_demo.Ptot(241:280, :);
+popdemo_o = simuls_old_demo.Ptot(241:280, :);
 
 
 fig_pibf_demo = figure(1);
@@ -175,3 +177,16 @@ plot(cts, sante_es_nq, '+', ...
 legend('Non Qualif.', 'Qualif.', 'location', 'best');
 
 saveas(fig_redux_es, './plots/redux_es.eps', 'epsc');
+
+fit = figure(9);
+subplot(1, 2, 1);
+plot(yrs, s_Ptot, '-', ...
+     yrs, poptot_n, ':', ...
+     yrs, poptot_o, '.');
+legend('Data', 'Model New', 'Model Old', 'location', 'best');
+subplot(1, 2, 2);
+plot(yrs, s_Ptot, '-', ...
+     yrs, s_old_Ptot, '-', ...
+     yrs, popdemo_n, ':', ...
+     yrs, popdemo_o, '.');
+legend('Data N', 'Data O', 'Modem New', 'Modem Old', 'location', 'best');
