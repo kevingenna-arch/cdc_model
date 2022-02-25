@@ -191,7 +191,7 @@ shocks;
 
 		var med_@{s}_@{j};
 		periods 240:279;
-		values (1*s_h_@{s}_@{j});
+		values (1*s_med_@{s}_@{j});
 	@#endfor
 @#endfor
 
@@ -201,7 +201,7 @@ values (s_xpop);
 end;
 
 %%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-perfect_foresight_setup(periods = 10);
+perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
 	% linear_approximation,
     maxit = 10	
