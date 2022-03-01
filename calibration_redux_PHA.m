@@ -4,35 +4,35 @@
 % run the SS, the EXO, the ENDO scripts
 
 % clean SS
-dynare cdcredux_stable_popbetaA nolog nopreprocessoroutput;
+dynare cdcredux_stable_pha nolog nopreprocessoroutput;
 
 % scenario baseline: productivité fixée à A=1
-dynare cdcredux_cal_popbetasA_shocks nolog nopreprocessoroutput;
+dynare cdcredux_cal_pha nolog nopreprocessoroutput;
 
 sims_baseline = simuls;
 
 % scenario pessimiste: dA = 1% dés 2045
-dynare cdcredux_cal_popbetasA_shocks -DTFP=0 nolog nopreprocessoroutput;
+dynare cdcredux_cal_pha -DTFP=0 nolog nopreprocessoroutput;
 
 sims_pess = simuls;
 
 % scenario optimiste: dA = 1.8% dés 2045
-dynare cdcredux_cal_popbetasA_shocks -DTFP=1 nolog nopreprocessoroutput;
+dynare cdcredux_cal_pha -DTFP=1 nolog nopreprocessoroutput;
 
 sims_opt = simuls;
 
 % scenario central: dA = 1.4% dés 2045
-dynare cdcredux_cal_popbetasA_shocks -DTFP=100 nolog nopreprocessoroutput;
+dynare cdcredux_cal_pha -DTFP=100 nolog nopreprocessoroutput;
 
 sims_ctr = simuls;
 
 % scenario sans previsions: dA = 0% dés 2030
-dynare cdcredux_cal_popbetasA_shocks -DTFP=2 nolog nopreprocessoroutput;
+dynare cdcredux_cal_pha -DTFP=2 nolog nopreprocessoroutput;
 
 sims_nocro = simuls;
 
 % scenario sans previsions: dA = 0.5% dés 2030
-dynare cdcredux_cal_popbetasA_shocks -DTFP=3 nolog nopreprocessoroutput;
+dynare cdcredux_cal_pha -DTFP=3 nolog nopreprocessoroutput;
 
 sims_des = simuls;
 
