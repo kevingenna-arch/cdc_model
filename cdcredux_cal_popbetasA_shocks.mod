@@ -84,7 +84,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   .5;         % productivity effect for health
+phi     =   0;         % productivity effect for health
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
@@ -175,10 +175,10 @@ end;
 
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % initvals and SS values from plain file
-load_params_and_steady_state('./output/ss_cdcredux_popbetas.txt');
+load_params_and_steady_state('./output/ss_cdcredux_popbetasA.txt');
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetas_CHOCS.txt');
+save_params_and_steady_state('./output/ss_cdcredux_popbetasA_CHOCS.txt');
 
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
@@ -214,6 +214,10 @@ values (s_xpop);
 	@#elseif TFP == 2
 	% sans previsions
 	values (s_A_eff);
+
+	@#elseif TFP == 3
+	values (s_A_des);
+
 	@#else
 
 	% scenario centrale

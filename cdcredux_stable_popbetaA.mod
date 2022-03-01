@@ -83,7 +83,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   .5;         % productivity effect for health
+phi     =   0;         % productivity effect for health
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
@@ -214,7 +214,7 @@ steady;
 save_params_and_steady_state('./output/ss_cdcredux_popbetasA.txt');
 
 %%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-perfect_foresight_setup(periods = 500);
+perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(
 	% linear_approximation,
     maxit = 10	
