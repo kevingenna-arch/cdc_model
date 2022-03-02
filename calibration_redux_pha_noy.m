@@ -2,7 +2,7 @@
 % - bloc Population
 % - bloc Health
 % - effets de productivité A et
-% - interaction entre stock de santé H et productivité/pib Y
+% - SANS interaction entre stock de santé H et productivité/pib Y
 %
 % mars 2022
 
@@ -78,7 +78,7 @@ plot(yrs, sim_y.base, '-', ...
 legend('Sans PT', 'dA=1%', 'dA=1.8%', 'dA=1.4%', 'dA=0%', 'dA=.25%', ...
      'Location', 'best');
 title('PIB');
-saveas(pibs, './plots/redux_PHA_pib.eps', 'epsc');
+saveas(pibs, './plots/redux_PHA_pib_noy.eps', 'epsc');
 % exportgraphics(pibs,'./plots/redux_PHA_pibs.jpg','Resolution',600);
 
 pts_macro = figure(2);
@@ -102,7 +102,7 @@ plot(yrs, sim_aq.base, '-', ...
 legend('Sans PT', 'dA=1%', 'dA=1.8%', 'dA=1.4%', 'dA=0%', 'dA=.25%', ...
      'Location', 'best');
 title('Productivité agregée des qualifiés')
-saveas(pts_macro, './plots/redux_PHA_TFPs.eps', 'epsc');
+saveas(pts_macro, './plots/redux_PHA_noy_TFPs.eps', 'epsc');
 % exportgraphics(pts_macro,'./plots/redux_PHA_TFPs.jpg','Resolution',600);
 
 pts_micro = figure(3);
@@ -110,5 +110,5 @@ plot(1:9, .7 + log(1:9)/10, '-', ...
      1:9, 1 + log(1:9)/10, '-');
 legend('NQ', 'Q', 'location', 'best');
 title('Profils de productivités individuelles');
-saveas(pts_micro, './plots/redux_PHA_prodmicro.eps', 'epsc');
+saveas(pts_micro, './plots/redux_PHA_noy_prodmicro.eps', 'epsc');
 % exportgraphics(pts_micro,'./plots/redux_PHA_prodmicro.jpg','Resolution',600)
