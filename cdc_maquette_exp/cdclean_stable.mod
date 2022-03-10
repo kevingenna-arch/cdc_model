@@ -116,7 +116,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   0;          %
+phi     =   0.1;          %
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
@@ -466,6 +466,7 @@ Twratio*y=Tw;
 v=.8;
 % target 30% debt to GDP
 Dratio=.3;
+% Dratio=.75;
 % discretional spending to 30%
 Gratio=.3;
 % K tax revenue to 10%
@@ -479,93 +480,58 @@ Penratio=0.14;
 % y1 mops up any residual on goods' mkt
 y1 + Kmig = (c + I + g + Deped);
 % check ought be 0
-cCheck=y + Kmig - (c + I + g + Deped);
+cCheck = y + Kmig - (c + I + g + Deped);
 
 end;
 
+model_diagnostics;
 
-
-%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-initval;
+%%%%%%%%%% INITVAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % initival provides initial guesses for solving for the actual SS
 % which can differ from initial values
+initval;
 
-@#for ql in qualif
+H = 1000;
 
-	@#for i in 1:NLS
-		k_@{ql}_@{i} = 5;
-		lamda_@{ql}_@{i} =1;
-		c_@{ql}_@{i}=1;
-		P_@{ql}_@{i}=.9;
-	@#endfor
-
-	h_@{ql}_1=100;
-	@#for i in 2:NLS
-		beta_@{ql}_@{i}=.98;
-		h_@{ql}_@{i}=100;
-	@#endfor
-
-	@#for i in 1:NT
-		lab_@{ql}_@{i}=.7;
-		w_@{ql}_@{i}=.1;
-	@#endfor
-
-	@#for i in NT+1:NLS
-		pen_@{ql}_@{i}=.2;
-	@#endfor
-
-	penind_@{ql}=1;
-	k_@{ql}_1=0;
-
-	MPL_@{ql}=.6;
-	L_@{ql}=15;
-
-@#endfor
+% cCheck = 0;
 
 @#for s in qualif
+	h_@{s}_1=100;
+	
 	@# for j in 2:NLS
 		med_@{s}_@{j} = 0;
 		mig_@{s}_@{j} = 0;
+		
+		beta_@{s}_@{i}=.98;
+		h_@{s}_@{i}=100;
+
+		P_@{s}_@{i}=.9;
+	@#endfor
+
+@#endfor
+@#for s in qualif
+	@#for j in 1:NT
+		lab_@{s}_@{j} = 1;
 	@#endfor
 @#endfor
 
-
-c      		=	40;
-y      		=	50;
-r      		=	0.09;
-kbar   		=	150;
-nbar    	=  	30;
-Tw 			=	12;
-beq 		=	.01;
-Kmig		= 	0;
-Tk			=	1;
-Tc			=	1;
-Pret		=	5;
-Ptot		=	15;
-H 			= 	1000;
-retire 		= 	5;
-penbase		= 	1;
-rd 			=	.09;
-D			=	1;
-I			=	1;
-Def 		=	1;
-rhop		=	.5;
-tauw		=	.2;
+xpop = 1;
 
 
+kbar = 1;
+nbar = 1;
 
-lambb   	=    50;
-lambbb  	=    -50;
-v 			=	.8;
-tauc 		=	.1;
-tauf 		=	.35;
-tauk 		=	.2;
+
+cCheck = 0;
+
 A 			= 	1;
 A_Q 		= 	2;
 
-xpop    	=    1;
-
 end;
+
+
+%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 steady;
 %%%%%%% Save SS values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

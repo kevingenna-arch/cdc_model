@@ -531,6 +531,10 @@ var xpop;
 periods 240:279;
 values (s_xpop);
 
+var A;
+periods 240:280;
+values (s_A_ctr);
+
 end;
 
 %%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

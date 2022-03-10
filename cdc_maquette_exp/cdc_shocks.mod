@@ -116,7 +116,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   0;          %
+phi     =   0.1;          %
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
@@ -501,21 +501,25 @@ shocks;
 @#for j in 2:NLS
 	@#for s in qualif
 		var mig_@{s}_@{j};
-		periods 240:279;
+		% periods 240:279;
+		periods 1:40;
 		values (s_full_mig_@{s}_@{j});
 
 		var med_@{s}_@{j};
-		periods 240:279;
+		% periods 240:279;
+		periods 1:40;
 		values (s_full_med_@{s}_@{j});
 	@#endfor
 @#endfor
 
 var xpop;
-periods 240:279;
+% periods 240:279;
+periods 1:40;
 values (s_xpop);
 
 var A;
-periods 240:280;
+% periods 240:280;
+periods 1:41;
 values (s_A_ctr);
 
 end;
@@ -524,7 +528,7 @@ end;
 
 % check;
 
-perfect_foresight_setup(periods = 500);
+perfect_foresight_setup(periods = 100);
 perfect_foresight_solver(
 	% linear_approximation,
     maxit = 2
