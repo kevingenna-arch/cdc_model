@@ -1,10 +1,11 @@
 %%%%% CDC clean ################################################################
-% version stable qui produit un ES comme initval
+% version avec P_ et beta_ endogenes, chocs produits par `cdcredux_cal_popbetas.mod`
+% les chocs touchent les valeur de P_ et 
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
-@#define NT=work                   //%  working ages
-@#define NTr=pens                  //%  retirement ages
+@#define NT=9                   //%  working ages
+@#define NTr=8                  //%  retirement ages
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
@@ -32,7 +33,7 @@
 
 @#endfor
 
-var y nbar Ptot Pret H;
+var y nbar Ptot Pret H Hact;
 var cCheck;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -83,10 +84,9 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   .1;         % productivity effect for health
-% phi     =   0;         % productivity effect for health
-T       =   @{NT};          % working ages
-Tr      =   @{NTr};          % retirement ages
+phi     =   .2;         % productivity effect for health
+T       =   9;          % working ages
+Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
 
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,6 +143,15 @@ H = (
 @#endfor
 );
 
+Hact = (
+@#for i in 1:NLS
+	@#for ql in qualif
+		+ P_@{ql}_@{i}*h_@{ql}_@{i}
+	@#endfor
+@#endfor
+);
+
+
 % Aggregate production
 % kbar is tot cap
 % nbar is tot labour
@@ -150,7 +159,8 @@ y = A * nbar^alp;
 
 % tot agg labour 
 % depends on health stock
-nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+% nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar = Hact(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
 % total labour by skill
 % accounts for number and prod
@@ -170,56 +180,70 @@ cCheck = Ptot - Pret - (
 	@#endfor
 	);
 
+
 end;
-
-
 
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-initval;
-% initival provides initial guesses for solving for the actual SS
-% which can differ from initial values
+% initvals and SS values from plain file
+load_params_and_steady_state('./output/ss_cdcredux_popbetasA.txt');
 
-@#for ql in qualif
+steady;
+save_params_and_steady_state('./output/ss_cdcredux_popbetasA_CHOCS.txt');
 
-	@#for i in 1:NLS
-		P_@{ql}_@{i}=1;
+%%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+shocks;
+
+@#for j in 2:NLS
+	@#for s in qualif
+		var mig_@{s}_@{j};
+		periods 240:279;
+		values (s_mig_@{s}_@{j});
+
+		var med_@{s}_@{j};
+		periods 240:279;
+		values (1*s_med_@{s}_@{j});
 	@#endfor
-
-	h_@{ql}_1=100;
-	@#for i in 2:NLS
-		beta_@{ql}_@{i}=.9;
-		h_@{ql}_@{i}=100;
-
-		% shocks are 0 at SS
-		med_@{ql}_@{i} = 0;
-		mig_@{ql}_@{i} = 0;
-	@#endfor
-	L_@{ql}=1.25;
-
 @#endfor
 
-H = 3000;
-nbar = 1.5;
-A = 1;
-A_Q = 2;
-xpop = 1;
+var xpop;
+periods 240:279;
+values (s_xpop);
 
-pi_NQ = .7;
-pi_Q = .3;
-y = 1.5;
-Ptot = 3;
-cCheck = 0;
+@#ifdef TFP
+	var A;
+	periods 240:280;
+
+	@#if TFP == 0
+	% pessimiste
+	values (s_A_pess);
+	
+	@#elseif TFP == 1
+	% optimiste
+	values (s_A_opt);
+	
+	@#elseif TFP == 2
+	% sans previsions
+	values (s_A_eff);
+
+	@#elseif TFP == 3
+	values (s_A_des);
+
+	@#else
+
+	% scenario centrale
+	values (s_A_ctr);
+
+	@#endif
+
+@#endif
+
+
 
 
 end;
 
-% resid;
-
-steady;
-save_params_and_steady_state('./output/ss_cdcredux_pha_@{work*5+15}.txt');
-
 %%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-perfect_foresight_setup(periods = 10);
+perfect_foresight_setup(periods = 500);
 perfect_foresight_solver(
 	% linear_approximation,
     maxit = 10	

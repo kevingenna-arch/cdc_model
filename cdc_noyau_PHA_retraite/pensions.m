@@ -59,3 +59,13 @@ plot(yrs(25:end), base.y(265:280)/base.y(265)./base.y(265:280), ...
 	 yrs(25:end), fried.y(265:280)/fried.y(265)./base.y(265:280));
 legend('60', '55', '65', '70');
 title('Rapport PIB vs baseline')
+
+pib_niv = figure(3);
+plot(yrs, base.y(241:280), ...
+	 yrs, gen.y(241:280), ...
+	 yrs, mac.y(241:280), ...
+	 yrs, fried.y(241:280));
+legend('60', '55', '65', '70')
+title('PIB niveaux')
+
+writetable(base, './output/pha_baseline.csv')
