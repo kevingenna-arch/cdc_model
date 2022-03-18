@@ -1,13 +1,15 @@
 %%%%% CDC clean ################################################################
+%% VERSION NETTOYEE DE LA MAQUETTE COMPLETE CDC
+
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
-@#define NT=9                   //%  working ages
-@#define NTr=8                  //%  retirement ages
+@#define NT=work                   //%  working ages
+@#define NTr=pens                  //%  retirement ages
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "../matrices_chocs.m" 	//%  external file collecting *all* shocks
+@#include "../matrices_chocs.m" 	//%  load up shocks externally
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
@@ -29,11 +31,9 @@
 		var w_@{ql}_@{i};     
 	@#endfor
 	% survival discount factor between periods-- CHECK
-	% !!!!!!!!
-	% @#for i in 2:NLS
-	% 	var beta_@{ql}_@{i};
-	% @#endfor
-	% !!!!!!!!
+	@#for i in 2:NLS
+		var beta_@{ql}_@{i};
+	@#endfor
 	% health stock -- CHECK
 	@#for i in 2:NLS
 		var h_@{ql}_@{i};
@@ -47,11 +47,9 @@
 		var pen_@{ql}_@{i};     
 	@#endfor
 	% cohort populations
-	% !!!!!!
-	% @#for i in 1:NLS
-		% var P_@{ql}_@{i} ;
-	% @#endfor
-	% !!!!!!
+	@#for i in 1:NLS
+		var P_@{ql}_@{i} ;
+	@#endfor
 	% welfare function value by age
 	@#for i in 1:NLS
 		var welf_@{ql}_@{i};
@@ -63,42 +61,27 @@
 	% - pi: share of first gen going for edu -- mirroring 
 	var L_@{ql} MPL_@{ql} penind_@{ql} pi_@{ql};
 
-	var P_@{ql}_1;
-
 @#endfor
 
 var Kmig y1 cCheck;
 
 var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D lambc Defratio Dratio Gratio Penratio Edratio Tkratio Tcratio Twratio rhop tauw tauk tauc v;
 
-%%%%% CALIBRATION SPACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% migration shocks are now endo
-% medical shocks are endo too
-@#for ql in qualif
-	@#for i in 2:NLS
-		var mig_@{ql}_@{i} med_@{ql}_@{i};
-	@#endfor
-@#endfor
-
-% pop level is exo
-% h stock is exo too
-@#for ql in qualif
-	@#for i in 2:NLS
-		varexo P_@{ql}_@{i} beta_@{ql}_@{i};
-	@#endfor
-
-	varexo h_@{ql}_1;
-@#endfor
-
-% varexo PTOT;
-% var s_tpop;
-
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A tauf xpop lambb lambbb A_Q;
 
+@#for ql in qualif
+	% health stock or shocks?
+	varexo h_@{ql}_1;
 
-%%%%% Parameters and values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	@#for i in 2:NLS
+		% shocks for migration and health stock
+		varexo mig_@{ql}_@{i} med_@{ql}_@{i};
+	@#endfor
+
+@#endfor
+
+%%%%% Parameters and values
 parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 
 @#for ql in qualif
@@ -110,19 +93,27 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 @#endfor
 
 @#for i in 1:NT
-	% productivity by age
-	a_NQ_@{i}=.7+log(@{i})/10;
 	% switcher for education
 	e_NQ_@{i}=0;
 	@#if i <= NE
-		% values for prod and switcher for skills
-		a_Q_@{i}=.7+log(@{i})/10;
 		e_Q_@{i}=1;
 	@#else 
-		a_Q_@{i}=1+log(@{i})/10;
 		e_Q_@{i}=0;
 	@#endif
 @#endfor
+
+@#ifdef prodind
+		@#if prodind == 1
+			@#include "prodind_baseline.m"
+		@#elseif prodind == 2
+			@#include "prodind_formcont.m"
+		@#elseif prodind == 3
+			@#include "prodind_socact.m"
+		@#endif
+	@#else
+	% fall back to standard
+	@#include "prodind_current.m"
+@#endif
 
 gam     =   1.5;        %
 gam1    =   .07;        %
@@ -132,16 +123,13 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   .2;         % health stock effect on labour prod
-T       =   9;          % working ages
-Tr      =   8;          % retirement ages
+phi     =   0;          %
+T       =   @{NT};      % working ages
+Tr      =   @{NTr};     % retirement ages
 LS      =   T+Tr;       % total ages
-
 
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
-
-% PTOT = Ptot + xpop + s_tpop;
 
 % education choice on recursive discounted welfare
 0=welf_Q_1-welf_NQ_1;
@@ -505,63 +493,166 @@ end;
 
 
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load_params_and_steady_state('./output/ss_cdclean.txt');
+initval;
+% initival provides initial guesses for solving for the actual SS
+% which can differ from initial values
 
-steady;
-save_params_and_steady_state('./output/ss_cdclean_pha_exo.txt');
+@#for ql in qualif
 
-%%%%% SHOCKS BLOCK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-shocks;
-% in simulated series timing is shifted by one period
-% if a shock hits from t=10 to t=15, its position in the 
-% series is t=11 to t=16, retrieved by 11:16 in MTLB
-@#for j in 2:NLS
-	@#for s in qualif
-		var P_@{s}_@{j};
-		periods 240:279;
-		values (s_P_@{s}_@{j});
-
-		var beta_@{s}_@{j};
-		periods 240:279;
-		values (s_h_@{s}_@{j});
+	@#for i in 1:NLS
+		k_@{ql}_@{i} = 5;
+		lamda_@{ql}_@{i} =1;
+		c_@{ql}_@{i}=1;
+		P_@{ql}_@{i}=.9;
 	@#endfor
+
+	h_@{ql}_1=120;
+	@#for i in 2:NLS
+		beta_@{ql}_@{i}=.9;
+		h_@{ql}_@{i}=120;
+	@#endfor
+
+	@#for i in 1:NT
+		lab_@{ql}_@{i}=.7;
+		w_@{ql}_@{i}=.1;
+	@#endfor
+
+	@#for i in NT+1:NLS
+		pen_@{ql}_@{i}=.2;
+	@#endfor
+
+	penind_@{ql}=1;
+	k_@{ql}_1=0;
+
+	MPL_@{ql}=.6;
+	L_@{ql}=15;
+
 @#endfor
 
-var xpop;
-periods 240:279;
-values (s_xpop);
 
-var A;
-periods 240:280;
-values (s_A_ctr);
+mig_NQ_2	=	0.455175185711674	;
+mig_NQ_3	=	0.348394685526794	;
+mig_NQ_4	=	0.395840507124491	;
+mig_NQ_5	=	0.353570128581158	;
+mig_NQ_6	=	0.301831331248066	;
+mig_NQ_7	=	0.313889015307074	;
+mig_NQ_8	=	0.264746443288438	;
+mig_NQ_9	=	0.237480784846447	;
+mig_NQ_10	=	0.183183647039420	;
+mig_NQ_11	=	0.139663033489348	;
+mig_NQ_12	=	0.0818078074582580	;
+mig_NQ_13	=	0.0399838025824241	;
+mig_NQ_14	=	0.0123190699537774	;
+mig_NQ_15	=	0.00227018225989047	;
+mig_NQ_16	=	0.000240660078663681	;
+mig_NQ_17	=	1.54557038047252e-05	;
+			
+mig_Q_2		=	0.455175185711674	;
+mig_Q_3		=	0.348394685526794	;
+mig_Q_4		=	0.395840507124491	;
+mig_Q_5		=	0.353570128581158	;
+mig_Q_6		=	0.301831331248066	;
+mig_Q_7		=	0.313889015307074	;
+mig_Q_8		=	0.264746443288438	;
+mig_Q_9		=	0.237480784846447	;
+mig_Q_10	=	0.183183647039420	;
+mig_Q_11	=	0.139663033489348	;
+mig_Q_12	=	0.0818078074582580	;
+mig_Q_13	=	0.0399838025824241	;
+mig_Q_14	=	0.0123190699537774	;
+mig_Q_15	=	0.00227018225989047	;
+mig_Q_16	=	0.000240660078663681	;
+mig_Q_17	=	1.54557038047252e-05	;
+			
+			
+med_NQ_2	=	-87.6010494357028	;
+med_NQ_3	=	0.798487434274586	;
+med_NQ_4	=	-1.60787772410298	;
+med_NQ_5	=	-2.14057728001311	;
+med_NQ_6	=	-2.36424723595204	;
+med_NQ_7	=	-2.37002447387764	;
+med_NQ_8	=	-2.95358946115637	;
+med_NQ_9	=	-2.72140998967913	;
+med_NQ_10	=	-2.24828983489933	;
+med_NQ_11	=	-1.62167769058286	;
+med_NQ_12	=	-1.14056323846574	;
+med_NQ_13	=	-0.656289863733754	;
+med_NQ_14	=	-0.374805069286264	;
+med_NQ_15	=	-0.161039312071300	;
+med_NQ_16	=	-0.0590031883432984	;
+med_NQ_17	=	-0.0138986861007415	;
+			
+med_Q_2		=	-87.6010494357028	;
+med_Q_3		=	0.798487434274586	;
+med_Q_4		=	-1.60787772410298	;
+med_Q_5		=	-2.14057728001311	;
+med_Q_6		=	-2.36424723595204	;
+med_Q_7		=	-2.37002447387764	;
+med_Q_8		=	-2.95358946115637	;
+med_Q_9		=	-2.72140998967913	;
+med_Q_10	=	-2.24828983489933	;
+med_Q_11	=	-1.62167769058286	;
+med_Q_12	=	-1.14056323846574	;
+med_Q_13	=	-0.656289863733754	;
+med_Q_14	=	-0.374805069286264	;
+med_Q_15	=	-0.161039312071300	;
+med_Q_16	=	-0.0590031883432984	;
+med_Q_17	=	-0.0138986861007415	;
+
+
+c      		=	40;
+y      		=	50;
+r      		=	0.09;
+kbar   		=	150;
+nbar    	=  	30;
+Tw 			=	12;
+beq 		=	.01;
+Kmig		= 	0;
+Tk			=	1;
+Tc			=	1;
+Pret		=	5;
+Ptot		=	15;
+H 			= 	100;
+retire 		= 	5;
+penbase		= 	1;
+rd 			=	.09;
+D			=	1;
+I			=	1;
+Def 		=	1;
+rhop		=	.5;
+tauw		=	.2;
+
+
+
+lambb   	=    50;
+lambbb  	=    -50;
+v 			=	.8;
+tauc 		=	.1;
+tauf 		=	.35;
+tauk 		=	.2;
+A 			= 	1;
+A_Q 		= 	2;
+
+xpop    	=    1;
+
 
 end;
 
-%%%%% SOLVE & SIMUL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-perfect_foresight_setup(periods = 500);
+resid;
+
+steady;
+check;
+
+perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(
-	linear_approximation,
-	maxit = 4
+	% linear_approximation,
+    maxit = 10	
 	);
 
-
-%%%%% MATLAB commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% Matlab commands %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 verbatim;
 simuls = array2table([oo_.endo_simul',oo_.exo_simul]);
 simuls.Properties.VariableNames = [M_.endo_names; M_.exo_names];
-% writetable(simuls, './output/simuls.csv', 'Delimiter', ';');
-% effacer toute variable auxiliaire
-clear AUX_* ;
-
-% select only matching vars
-matched_mig = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'mig_', 'once'));
-mig_shocks = simuls(:, simuls.Properties.VariableNames(matched_mig));
-mig_flipped = rows2vars(mig_shocks);
-mig_flipped.Properties.RowNames = table2array(mig_flipped(:, 1));
-writetable(mig_flipped(:, (240:279)+2), './output/mig_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
-
-matched_med = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'med_', 'once'));
-med_shocks = simuls(:, simuls.Properties.VariableNames(matched_med));
-med_flipped = rows2vars(med_shocks);
-med_flipped.Properties.RowNames = table2array(med_flipped(:, 1));
-writetable(med_flipped(:, (240:279)+2), './output/med_shocks.xlsx', 'WriteVariableNames',false, 'WriteRowNames', true);
+match_aux = ~cellfun('isempty', regexp(simuls.Properties.VariableNames, 'AUX_', 'once'));
+simuls = simuls(:, simuls.Properties.VariableNames(~match_aux));
+clear AUX_* match_aux

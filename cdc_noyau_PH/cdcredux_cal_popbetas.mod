@@ -11,7 +11,7 @@
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "matrices_chocs.m" 	//%  load up shocks externally 
+@#include "../matrices_chocs.m" 	//%  external file collecting *all* shocks
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
