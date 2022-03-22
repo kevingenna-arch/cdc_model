@@ -62,19 +62,27 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 @#endfor
 
 @#for i in 1:NT
-	% productivity by age
-	a_NQ_@{i}=.7+log(@{i})/10;
 	% switcher for education
 	e_NQ_@{i}=0;
 	@#if i <= NE
-		% values for prod and switcher for skills
-		a_Q_@{i}=.7+log(@{i})/10;
 		e_Q_@{i}=1;
 	@#else 
-		a_Q_@{i}=1+log(@{i})/10;
 		e_Q_@{i}=0;
 	@#endif
 @#endfor
+
+@#ifdef prodind
+		@#if prodind == 1
+			@#include "prodind_baseline.m"
+		@#elseif prodind == 2
+			@#include "prodind_formcont.m"
+		@#elseif prodind == 3
+			@#include "prodind_socact.m"
+		@#endif
+	@#else
+	% fall back to standard
+	@#include "prodind_current.m"
+@#endif
 
 gam     =   1.5;        %
 gam1    =   .07;        %

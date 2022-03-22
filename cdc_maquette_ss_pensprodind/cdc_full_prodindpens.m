@@ -55,3 +55,32 @@ fried.model = repmat({'70'}, height(fried), 1);
 out = vertcat(base, gen, mac, fried);
 
 writetable(out, "./output/pens_ss.csv");
+
+
+%% Individual productivity
+
+% baseline profile
+dynare sscomp_pensprod -Dwork=9 -Dpens=8 -Dprodind=1 nolog nopreprocessoroutput;
+prindbase = simuls(1, :);
+
+% formation continue
+dynare sscomp_pensprod -Dwork=9 -Dpens=8 -Dprodind=2 nolog nopreprocessoroutput;
+prindfc = simuls(1, :);
+
+% activités socialisées
+dynare sscomp_pensprod -Dwork=9 -Dpens=8 -Dprodind=3 nolog nopreprocessoroutput;
+prindas = simuls(1, :);
+
+% classify models
+prindbase.mod = {'base'};
+prindfc.mod = {'FC'};
+prindas.mod = {'AS'};
+
+% put all together
+prodind = vertcat(prindbase, prindfc, prindas);
+% flip to column
+prodind_mid = stack(prodind, 1:(width(prodind)-1));
+prodind_mid.Properties.VariableNames = {'mod', 'variable', 'value'};
+prodind_out = unstack(prodind_mid, 'value', 'mod');
+
+writetable(prodind_out, "./output/prodind_ss.csv");
