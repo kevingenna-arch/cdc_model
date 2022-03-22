@@ -31,3 +31,27 @@ dynare sscomp_pensprod -Dwork=11 -Dpens=6 nolog nopreprocessoroutput;
 fried = simuls(1, :);
 fried.age = 70;
 
+% handle results
+base = stack(base, 1:width(base));
+base.Properties.VariableNames = {'value', 'variable'};
+base.Properties.VariableNames = {'variable', 'value'};
+base.model = repmat({'base'}, height(base), 1);
+
+gen = stack(gen, 1:width(gen));
+gen.Properties.VariableNames = {'value', 'variable'};
+gen.Properties.VariableNames = {'variable', 'value'};
+gen.model = repmat({'55'}, height(gen), 1);
+
+mac = stack(mac, 1:width(mac));
+mac.Properties.VariableNames = {'value', 'variable'};
+mac.Properties.VariableNames = {'variable', 'value'};
+mac.model = repmat({'65'}, height(mac), 1);
+
+fried = stack(fried, 1:width(fried));
+fried.Properties.VariableNames = {'value', 'variable'};
+fried.Properties.VariableNames = {'variable', 'value'};
+fried.model = repmat({'70'}, height(fried), 1);
+
+out = vertcat(base, gen, mac, fried);
+
+writetable(out, "./output/pens_ss.csv");

@@ -474,7 +474,7 @@ v=.8;
 % target 30% debt to GDP
 Dratio=.3;
 % discretional spending to 30%
-Gratio=.3;
+Gratio=.13;
 % K tax revenue to 10%
 Tkratio=.1;
 % C tax revenue to 10%
