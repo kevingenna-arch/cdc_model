@@ -161,17 +161,26 @@ ggsave(plot = plot_pens_welf,
        path = "../plots/",
        filename = "pens_welf.eps",
        device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
        dpi = 'retina')
 
 ggsave(plot = plot_pens_conso,
        path = "../plots/",
        filename = "pens_conso.eps",
        device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
        dpi = 'retina')
 
 ggsave(plot = plot_pens_montret,
        path = "../plots/",
        filename = "pens_montret.eps",
+       width = 8,
+       height = 4.5,
+       units = 'in',
        device = 'eps',
        dpi = 'retina')
 
@@ -187,4 +196,173 @@ plot_pens_pop <- pens_vars %>%
 
 # SS comparison: full CDC, individual productivities ----------------------
 
-prodind <- read_csv()
+# find matlab and run the script generating the files
+get_matlab()
+run_matlab_script("../cdc_maquette_ss_pensprodind/cdc_full_prodindpens.m",
+                  verbose = F)
+
+prodind <- read_csv(file = "../cdc_maquette_ss_pensprodind/output/prodind_ss.csv",
+                    show_col_types = F) %>%
+  separate(col = "variable",
+           into = c("vars", "skill", "cohort"),
+           sep = "_",
+           remove = F) %>%
+  mutate(skill = factor(skill, c("NQ", "Q")),
+         cohort = as.numeric(cohort)*5+15) %>%
+  mutate(across(.cols = c("AS", "FC"),
+                .fns = ~ (.x - base)*100/base,
+                .names = "{.col}_pct"))
+
+prodind_sel <- prodind %>%
+  select(-c("AS", "base", "FC")) %>%
+  filter(vars %in% c("k", "w", 'c', "welf", "lab", 'pen') & variable != 'c')
+
+
+prodind_ag <- prodind %>%
+  select(-c("AS", "base", "FC")) %>%
+  select(-c("skill", 'cohort', 'vars')) %>%
+  filter(variable %in% c("y", "c", "kbar", "nbar", "I", "g", "retire", "D", "Def") |
+           grepl('T', variable) |
+           grepl('tau', variable) |
+           grepl('ratio', variable))
+
+# table
+prodind_ag %>%
+  xtable() %>%
+  print(type = 'latex',
+        file = "../output/tab_ss_prodind.tex",
+        floating = F,
+        latex.environment = NULL)
+
+## plots
+plot_prodind_welf <- prodind_sel %>%
+  filter(vars == 'welf') %>%
+  select(-variable) %>%
+  pivot_longer(cols = contains('_pct'),
+               names_to = 'Politique',
+               values_to = 'value') %>%
+  ggplot(aes(x = cohort, y = value, linetype = skill, colour = Politique))+
+  geom_hline(yintercept = 0) +
+  geom_line() + theme_bw() +
+  xlab('Age') + ylab('Deviation en pourcentage par rapport au scenario de base') +
+  ggtitle('Profile du bienetre')
+
+ggsave(plot = plot_prodind_welf,
+       path = "../plots/",
+       filename = "prodind_welf.eps",
+       device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
+       dpi = 'retina')
+
+plot_prodind_c <- prodind_sel %>%
+  filter(vars == 'c') %>%
+  select(-variable) %>%
+  pivot_longer(cols = contains('_pct'),
+               names_to = 'Politique',
+               values_to = 'value') %>%
+  ggplot(aes(x = cohort, y = value, linetype = skill, colour = Politique))+
+  geom_hline(yintercept = 0) +
+  geom_line() + theme_bw() +
+  xlab('Age') + ylab('Deviation en pourcentage par rapport au scenario de base') +
+  ggtitle('Profile de consommation')
+
+ggsave(plot = plot_prodind_c,
+       path = "../plots/",
+       filename = "prodind_c.eps",
+       width = 8,
+       height = 4.5,
+       units = 'in',
+       device = 'eps',
+       dpi = 'retina')
+
+plot_prodind_w <- prodind_sel %>%
+  filter(vars == 'w') %>%
+  select(-variable) %>%
+  pivot_longer(cols = contains('_pct'),
+               names_to = 'Politique',
+               values_to = 'value') %>%
+  ggplot(aes(x = cohort, y = value, linetype = skill, colour = Politique))+
+  geom_hline(yintercept = 0) +
+  geom_line() + theme_bw() +
+  xlab('Age') + ylab('Deviation en pourcentage par rapport au scenario de base') +
+  ggtitle('Profile du salaire')
+
+ggsave(plot = plot_prodind_w,
+       path = "../plots/",
+       filename = "prodind_w.eps",
+       device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
+       dpi = 'retina')
+
+
+plot_prodind_k <- prodind_sel %>%
+  filter(vars == 'k') %>%
+  select(-variable) %>%
+  pivot_longer(cols = contains('_pct'),
+               names_to = 'Politique',
+               values_to = 'value') %>%
+  ggplot(aes(x = cohort, y = value, linetype = skill, colour = Politique))+
+  geom_hline(yintercept = 0) +
+  geom_line() + theme_bw() +
+  xlab('Age') + ylab('Deviation en pourcentage par rapport au scenario de base') +
+  ggtitle('Profile du patrimoine')
+
+ggsave(plot = plot_prodind_k,
+       path = "../plots/",
+       filename = "prodind_k.eps",
+       device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
+       dpi = 'retina')
+
+plot_prodind_pen <- prodind_sel %>%
+  filter(vars == 'pen') %>%
+  select(-variable) %>%
+  pivot_longer(cols = contains('_pct'),
+               names_to = 'Politique',
+               values_to = 'value') %>%
+  ggplot(aes(x = cohort, y = value, linetype = skill, colour = Politique))+
+  geom_hline(yintercept = 0) +
+  geom_line() + theme_bw() +
+  xlab('Age') + ylab('Deviation en pourcentage par rapport au scenario de base') +
+  ggtitle('Profile du salaire de retraite')
+
+ggsave(plot = plot_prodind_pen,
+       path = "../plots/",
+       filename = "prodind_pens.eps",
+       device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
+       dpi = 'retina')
+
+plot_prodind_lab <- prodind_sel %>%
+  filter(vars == 'lab') %>%
+  select(-variable) %>%
+  pivot_longer(cols = contains('_pct'),
+               names_to = 'Politique',
+               values_to = 'value') %>%
+  ggplot(aes(x = cohort, y = value, linetype = skill, colour = Politique))+
+  geom_hline(yintercept = 0) +
+  geom_line() + theme_bw() +
+  xlab('Age') + ylab('Deviation en pourcentage par rapport au scenario de base') +
+  ggtitle("Profile de l'offre de travail")
+
+ggsave(plot = plot_prodind_lab,
+       path = "../plots/",
+       filename = "prodind_lab.eps",
+       device = 'eps',
+       width = 8,
+       height = 4.5,
+       units = 'in',
+       dpi = 'retina')
+
+
+# dynamic comparison: PHA and prodind -------------------------------------
+
+
