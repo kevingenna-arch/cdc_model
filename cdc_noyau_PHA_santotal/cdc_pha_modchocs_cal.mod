@@ -33,7 +33,7 @@
 
 @#endfor
 
-var y nbar Ptot Pret H Hact;
+var y nbar Ptot Pret H Htot y_h nbar_h;
 var cCheck;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,7 +143,7 @@ H = (
 @#endfor
 );
 
-Hact = (
+Htot = (
 @#for i in 1:NLS
 	@#for ql in qualif
 		+ P_@{ql}_@{i}*h_@{ql}_@{i}
@@ -156,11 +156,11 @@ Hact = (
 % kbar is tot cap
 % nbar is tot labour
 y = A * nbar^alp;   
-
+y_h = A * nbar_h^alp;
 % tot agg labour 
 % depends on health stock
-% nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
-nbar = Hact(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar_h = Htot(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
 % total labour by skill
 % accounts for number and prod
@@ -185,10 +185,10 @@ end;
 
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % initvals and SS values from plain file
-load_params_and_steady_state('./output/ss_cdcredux_popbetasA.txt');
+load_params_and_steady_state('./output/ss_cdc_pha.txt');
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetasA_CHOCS.txt');
+save_params_and_steady_state('./output/ss_cdc_pha_chocs.txt');
 
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
@@ -197,11 +197,19 @@ shocks;
 	@#for s in qualif
 		var mig_@{s}_@{j};
 		periods 240:279;
-		values (s_mig_@{s}_@{j});
+		@#ifdef mig10
+			values (s_ten_mig_@{s}_@{j});
+		@#else
+			values (s_mig_@{s}_@{j});
+		@#endif
 
 		var med_@{s}_@{j};
 		periods 240:279;
-		values (1*s_med_@{s}_@{j});
+		@#ifdef med30
+			values (s_trent_med_@{s}_@{j});
+		@#else
+			values (s_med_@{s}_@{j});
+		@#endif
 	@#endfor
 @#endfor
 
@@ -222,8 +230,7 @@ values (s_xpop);
 	values (s_A_opt);
 	
 	@#elseif TFP == 2
-	% sans previsions
-	values (s_A_eff);
+	% sans previsions(s_A_eff);
 
 	@#elseif TFP == 3
 	values (s_A_des);

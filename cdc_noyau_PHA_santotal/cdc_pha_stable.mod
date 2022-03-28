@@ -32,7 +32,7 @@
 
 @#endfor
 
-var y nbar Ptot Pret H Hact;
+var y nbar Ptot Pret H Htot y_h nbar_h;
 var cCheck;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,18 +61,19 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 @#endfor
 
 @#for i in 1:NT
-	% productivity by age
-	a_NQ_@{i}=.7+log(@{i})/10;
 	% switcher for education
 	e_NQ_@{i}=0;
 	@#if i <= NE
-		% values for prod and switcher for skills
-		a_Q_@{i}=.7+log(@{i})/10;
 		e_Q_@{i}=1;
 	@#else 
-		a_Q_@{i}=1+log(@{i})/10;
 		e_Q_@{i}=0;
 	@#endif
+@#endfor
+
+% individual productivity
+@#for i in 1:NT
+	a_NQ_@{i} = .85 + normpdf(@{i}, 6, 4/1.5);
+	a_Q_@{i} = 1.15 + normpdf(@{i}, 6, 3/1.5);
 @#endfor
 
 gam     =   1.5;        %
@@ -142,7 +143,7 @@ H = (
 @#endfor
 );
 
-Hact = (
+Htot = (
 @#for i in 1:NLS
 	@#for ql in qualif
 		+ P_@{ql}_@{i}*h_@{ql}_@{i}
@@ -155,11 +156,13 @@ Hact = (
 % kbar is tot cap
 % nbar is tot labour
 y = A * nbar^alp;   
+y_h = A * nbar_h^alp;
+
 
 % tot agg labour 
 % depends on health stock
-nbar = Hact(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
-% nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar_h = Htot(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
 % total labour by skill
 % accounts for number and prod
@@ -207,17 +210,19 @@ initval;
 
 @#endfor
 
-H = 3000;
-Hact = 5000;
-nbar = 1.5;
+H = 1000;
+Htot = 1500;
+nbar = 22;
+nbar_h = 30;
 A = 1;
 A_Q = 2;
 xpop = 1;
 
 pi_NQ = .7;
 pi_Q = .3;
-y = 1.5;
-Ptot = 3;
+y = 9;
+y_h = 10;
+Ptot = 15;
 cCheck = 0;
 
 
@@ -226,7 +231,7 @@ end;
 % resid;
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetasA.txt');
+save_params_and_steady_state('./output/ss_cdc_pha.txt');
 
 %%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perfect_foresight_setup(periods = 10);
