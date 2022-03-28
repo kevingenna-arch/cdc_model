@@ -44,6 +44,7 @@ plot(yrs, base.L_NQ, '-', ...
 legend('Base NQ', 'Reduction chomage NQ', 'Base Q', 'Reduction chomage Q', 'Location', 'best');
 title('Offre de travail');
 
+saveas(plot_pop, '../plots/migchomage_pib_offreL', 'epsc');
 
 % baseline vs health
 plot_health = figure(2);
@@ -68,6 +69,8 @@ legend('Base', "Reduction mortalité", ...
 	'Location', "best");
 title('Travail effectif');
 
+saveas(plot_health, '../plots/mortalitered_pib_L_nbar.eps', 'epsc');
+
 plot_healthstock = figure(3);
 subplot(1, 2, 1)
 plot(yrs, base.H, '-', ...
@@ -81,9 +84,12 @@ plot(yrs, base.Htot, '-', ...
 legend('Base', 'Reduction mortalité', "Location", "best");
 title('Stock santé totale');
 
+saveas(plot_healthstock, '../plots/mortalitered_stockssante.eps', 'epsc');
+
 % santé totale VS santé actifs
 plot_totsant = figure(4);
 plot(yrs, base.y, '-', ...
 	yrs, base.y_h, '--');
 legend('Base', 'Santé totale', 'Location', 'best');
 title('PIB');
+saveas(plot_totsant, '../plots/sante_pib.eps', 'epsc');
