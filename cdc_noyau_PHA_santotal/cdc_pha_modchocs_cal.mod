@@ -205,8 +205,10 @@ shocks;
 
 		var med_@{s}_@{j};
 		periods 240:279;
-		@#ifdef med30
+		@#if med30==1
 			values (s_trent_med_@{s}_@{j});
+		@#elseif med30==2
+			values (s_vingt_med_@{s}_@{j});
 		@#else
 			values (s_med_@{s}_@{j});
 		@#endif
