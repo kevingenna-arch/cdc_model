@@ -498,10 +498,10 @@ initval;
 		P_@{ql}_@{i}=.9;
 	@#endfor
 
-	h_@{ql}_1=120;
+	h_@{ql}_1=100;
 	@#for i in 2:NLS
 		beta_@{ql}_@{i}=.9;
-		h_@{ql}_@{i}=120;
+		h_@{ql}_@{i}=100;
 	@#endfor
 
 	@#for i in 1:NT
@@ -521,7 +521,7 @@ initval;
 
 @#endfor
 
-
+/*
 mig_NQ_2	=	0.455175185711674	;
 mig_NQ_3	=	0.348394685526794	;
 mig_NQ_4	=	0.395840507124491	;
@@ -591,7 +591,7 @@ med_Q_15	=	-0.161039312071300	;
 med_Q_16	=	-0.0590031883432984	;
 med_Q_17	=	-0.0138986861007415	;
 
-
+*/
 c      		=	40;
 y      		=	50;
 r      		=	0.09;
@@ -635,7 +635,7 @@ resid;
 
 steady;
 check;
-
+save_params_and_steady_state('./ss_cdc.txt');
 perfect_foresight_setup(periods = 250);
 perfect_foresight_solver(
 	% linear_approximation,

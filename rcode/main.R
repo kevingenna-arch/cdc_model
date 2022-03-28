@@ -126,6 +126,7 @@ plot_pens_welf <- pens_vars %>%
   pivot_longer(cols = contains("_pct"), names_to = "model", values_to = 'value') %>%
   ggplot(aes(x = cohort, y = value, colour = model)) +
   geom_line() +
+  geom_hline(yintercept = 0) +
   facet_wrap(.~skill, nrow = 2) +
   ylab('Pourcentage par rapport au depart à 60 ans') +
   xlab("Age") +
@@ -138,6 +139,7 @@ plot_pens_conso <- pens_vars %>%
   pivot_longer(cols = contains("_pct"), names_to = "model", values_to = 'value') %>%
   ggplot(aes(x = cohort, y = value, colour = model)) +
   geom_line() +
+  geom_hline(yintercept = 0) +
   facet_wrap(.~skill, nrow = 2) +
   ylab('Pourcentage par rapport au depart à 60 ans') +
   xlab("Age") +
@@ -151,6 +153,7 @@ plot_pens_montret <- pens_vars %>%
   pivot_longer(cols = contains("_pct"), names_to = "model", values_to = 'value') %>%
   ggplot(aes(x = cohort, y = value, colour = model)) +
   geom_line() +
+  geom_hline(yintercept = 0) +
   facet_wrap(.~skill, nrow = 2) +
   ylab('Pourcentage par rapport au depart à 60 ans') +
   xlab("Age") +
@@ -197,9 +200,9 @@ plot_pens_pop <- pens_vars %>%
 # SS comparison: full CDC, individual productivities ----------------------
 
 # find matlab and run the script generating the files
-get_matlab()
-run_matlab_script("../cdc_maquette_ss_pensprodind/cdc_full_prodindpens.m",
-                  verbose = F)
+# get_matlab()
+# run_matlab_script("../cdc_maquette_ss_pensprodind/cdc_full_prodindpens.m",
+#                   verbose = F)
 
 prodind <- read_csv(file = "../cdc_maquette_ss_pensprodind/output/prodind_ss.csv",
                     show_col_types = F) %>%

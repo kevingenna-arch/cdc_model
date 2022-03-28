@@ -491,161 +491,93 @@ cCheck=y + Kmig - (c + I + g + Deped);
 end;
 
 
+@#ifdef prodind
+    initval;
+    % initival provides initial guesses for solving for the actual SS
+    % which can differ from initial values
+    
+    @#for ql in qualif
+    
+	    @#for i in 1:NLS
+		    k_@{ql}_@{i} = 5;
+		    lamda_@{ql}_@{i} =1;
+		    c_@{ql}_@{i}=1;
+		    P_@{ql}_@{i}=.9;
+	    @#endfor
+    
+	    h_@{ql}_1=100;
+	    @#for i in 2:NLS
+		    beta_@{ql}_@{i}=.9;
+		    h_@{ql}_@{i}=100;
+    
+            med_@{ql}_@{i} = 0;
+            mig_@{ql}_@{i} = 0;
+	    @#endfor
+    
+	    @#for i in 1:NT
+		    lab_@{ql}_@{i}=.7;
+		    w_@{ql}_@{i}=.1;
+	    @#endfor
+    
+	    @#for i in NT+1:NLS
+		    pen_@{ql}_@{i}=.2;
+	    @#endfor
+    
+	    penind_@{ql}=1;
+	    k_@{ql}_1=0;
+    
+	    MPL_@{ql}=.6;
+	    L_@{ql}=15;
+    
+    @#endfor
+    
+    
+    c      		=	40;
+    y      		=	50;
+    r      		=	0.09;
+    kbar   		=	150;
+    nbar    	=  	30;
+    Tw 			=	12;
+    beq 		=	.01;
+    Kmig		= 	0;
+    Tk			=	1;
+    Tc			=	1;
+    Pret		=	5;
+    Ptot		=	15;
+    H 			= 	100;
+    retire 		= 	5;
+    penbase		= 	1;
+    rd 			=	.09;
+    D			=	1;
+    I			=	1;
+    Def 		=	1;
+    rhop		=	.5;
+    tauw		=	.2;
+    
+    
+    
+    lambb   	=    50;
+    lambbb  	=    -50;
+    v 			=	.8;
+    tauc 		=	.1;
+    tauf 		=	.35;
+    tauk 		=	.2;
+    A 			= 	1;
+    A_Q 		= 	2;
+    
+    xpop    	=    1;
+    
+    
+    end;
+@#else
+    load_params_and_steady_state('./output/ss_cdc.txt');
+@#endif
 
-%%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-initval;
-% initival provides initial guesses for solving for the actual SS
-% which can differ from initial values
-
-@#for ql in qualif
-
-	@#for i in 1:NLS
-		k_@{ql}_@{i} = 5;
-		lamda_@{ql}_@{i} =1;
-		c_@{ql}_@{i}=1;
-		P_@{ql}_@{i}=.9;
-	@#endfor
-
-	h_@{ql}_1=120;
-	@#for i in 2:NLS
-		beta_@{ql}_@{i}=.9;
-		h_@{ql}_@{i}=120;
-	@#endfor
-
-	@#for i in 1:NT
-		lab_@{ql}_@{i}=.7;
-		w_@{ql}_@{i}=.1;
-	@#endfor
-
-	@#for i in NT+1:NLS
-		pen_@{ql}_@{i}=.2;
-	@#endfor
-
-	penind_@{ql}=1;
-	k_@{ql}_1=0;
-
-	MPL_@{ql}=.6;
-	L_@{ql}=15;
-
-@#endfor
-
-
-mig_NQ_2	=	0.455175185711674	;
-mig_NQ_3	=	0.348394685526794	;
-mig_NQ_4	=	0.395840507124491	;
-mig_NQ_5	=	0.353570128581158	;
-mig_NQ_6	=	0.301831331248066	;
-mig_NQ_7	=	0.313889015307074	;
-mig_NQ_8	=	0.264746443288438	;
-mig_NQ_9	=	0.237480784846447	;
-mig_NQ_10	=	0.183183647039420	;
-mig_NQ_11	=	0.139663033489348	;
-mig_NQ_12	=	0.0818078074582580	;
-mig_NQ_13	=	0.0399838025824241	;
-mig_NQ_14	=	0.0123190699537774	;
-mig_NQ_15	=	0.00227018225989047	;
-mig_NQ_16	=	0.000240660078663681	;
-mig_NQ_17	=	1.54557038047252e-05	;
-			
-mig_Q_2		=	0.455175185711674	;
-mig_Q_3		=	0.348394685526794	;
-mig_Q_4		=	0.395840507124491	;
-mig_Q_5		=	0.353570128581158	;
-mig_Q_6		=	0.301831331248066	;
-mig_Q_7		=	0.313889015307074	;
-mig_Q_8		=	0.264746443288438	;
-mig_Q_9		=	0.237480784846447	;
-mig_Q_10	=	0.183183647039420	;
-mig_Q_11	=	0.139663033489348	;
-mig_Q_12	=	0.0818078074582580	;
-mig_Q_13	=	0.0399838025824241	;
-mig_Q_14	=	0.0123190699537774	;
-mig_Q_15	=	0.00227018225989047	;
-mig_Q_16	=	0.000240660078663681	;
-mig_Q_17	=	1.54557038047252e-05	;
-			
-			
-med_NQ_2	=	-87.6010494357028	;
-med_NQ_3	=	0.798487434274586	;
-med_NQ_4	=	-1.60787772410298	;
-med_NQ_5	=	-2.14057728001311	;
-med_NQ_6	=	-2.36424723595204	;
-med_NQ_7	=	-2.37002447387764	;
-med_NQ_8	=	-2.95358946115637	;
-med_NQ_9	=	-2.72140998967913	;
-med_NQ_10	=	-2.24828983489933	;
-med_NQ_11	=	-1.62167769058286	;
-med_NQ_12	=	-1.14056323846574	;
-med_NQ_13	=	-0.656289863733754	;
-med_NQ_14	=	-0.374805069286264	;
-med_NQ_15	=	-0.161039312071300	;
-med_NQ_16	=	-0.0590031883432984	;
-med_NQ_17	=	-0.0138986861007415	;
-			
-med_Q_2		=	-87.6010494357028	;
-med_Q_3		=	0.798487434274586	;
-med_Q_4		=	-1.60787772410298	;
-med_Q_5		=	-2.14057728001311	;
-med_Q_6		=	-2.36424723595204	;
-med_Q_7		=	-2.37002447387764	;
-med_Q_8		=	-2.95358946115637	;
-med_Q_9		=	-2.72140998967913	;
-med_Q_10	=	-2.24828983489933	;
-med_Q_11	=	-1.62167769058286	;
-med_Q_12	=	-1.14056323846574	;
-med_Q_13	=	-0.656289863733754	;
-med_Q_14	=	-0.374805069286264	;
-med_Q_15	=	-0.161039312071300	;
-med_Q_16	=	-0.0590031883432984	;
-med_Q_17	=	-0.0138986861007415	;
-
-
-c      		=	40;
-y      		=	50;
-r      		=	0.09;
-kbar   		=	150;
-nbar    	=  	30;
-Tw 			=	12;
-beq 		=	.01;
-Kmig		= 	0;
-Tk			=	1;
-Tc			=	1;
-Pret		=	5;
-Ptot		=	15;
-H 			= 	100;
-retire 		= 	5;
-penbase		= 	1;
-rd 			=	.09;
-D			=	1;
-I			=	1;
-Def 		=	1;
-rhop		=	.5;
-tauw		=	.2;
-
-
-
-lambb   	=    50;
-lambbb  	=    -50;
-v 			=	.8;
-tauc 		=	.1;
-tauf 		=	.35;
-tauk 		=	.2;
-A 			= 	1;
-A_Q 		= 	2;
-
-xpop    	=    1;
-
-
-end;
-
-resid;
 
 steady;
-check;
 
 perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(
-	% linear_approximation,
     maxit = 10	
 	);
 
