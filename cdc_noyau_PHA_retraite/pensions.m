@@ -71,7 +71,7 @@ plot(yrs, base.y(241:280), ...
 legend('60', '55', '65', '70',...
  'Location', 'best')
 title('PIB niveaux')
-saveas(pib_niv, '../plots/pens_pha_pib_niveau.eps', 'epsc');
+saveas(pib_niv, '../plots/pens_pha_pib_niveau_no.eps', 'epsc');
 
 
 
@@ -118,7 +118,7 @@ plot(yrs(25:end), low_base.y(265:280)/low_base.y(265), ...
 legend('60', '55', '65', '70', ...
 	'location', 'best');
 title('PIB normalisé au niveau 2020')
-saveas(pib, '../plots/pens_pha_pib_normalise.eps', 'epsc');
+saveas(pib, '../plots/pens_pha_pib_normalise_noA.eps', 'epsc');
 
 pib_pct = figure(12);
 plot(yrs(25:end), 100*((low_gen.y(265:280)./low_base.y(265:280))/(low_gen.y(265)/low_base.y(265)) - 1), ...
@@ -128,7 +128,7 @@ yline(0);
 legend('55', '65', '70', ...
 	'location', 'best');
 title('PIB: ecarts en pourcentage par rapport au scenario actuel - 60 ans')
-saveas(pib_pct, '../plots/pens_pha_pib_pct.eps', 'epsc');
+saveas(pib_pct, '../plots/pens_pha_pib_pct_noA.eps', 'epsc');
 
 pib_niv = figure(13);
 plot(yrs, low_base.y(241:280), ...
@@ -138,7 +138,7 @@ plot(yrs, low_base.y(241:280), ...
 legend('60', '55', '65', '70',...
  'Location', 'best')
 title('PIB niveaux')
-saveas(pib_niv, '../plots/pens_pha_pib_niveau.eps', 'epsc');
+saveas(pib_niv, '../plots/pens_pha_pib_niveau_noA.eps', 'epsc');
 
 %%% individual prods %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % baseline
@@ -197,3 +197,64 @@ prodindsims = vertcat(prodin_basef, prodin_fcf, prodin_asf);
 prodindout = unstack(prodindsims, 'value', 'mod');
 
 writetable(prodindout, "./output/prodind_sims_pha.csv");
+
+
+%%%%% augmentation partie des qualifiés %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% simulate the baseline: gauss prod ind, central tfp, retirement at 60
+dynare cdc_pha_stable -Dwork=9 -Dpens=8 -Dprodind=1 nolog nopreprocessoroutput;
+% simulations avec chocs
+dynare cdc_pha_cal -DTFP=100 -Dwork=9 -Dpens=8 -Dprodind=1 nolog nopreprocessoroutput;
+
+q_share30 = simuls(241:280, :);
+
+
+% up the skilled share to .5
+dynare cdc_pha_cal -DTFP=100 -Dwork=9 -Dpens=8 -Dprodind=1 -Dchoc_q=100 nolog nopreprocessoroutput;
+q_share50 = simuls(241:280, :);
+
+
+plot_pib = figure(201);
+plot(yrs, q_share30.y, '-', ...
+	yrs, q_share50.y, '--');
+legend('Base', 'Q = +5%', ...
+	'Location', 'southoutside')
+title('PIB');
+saveas(plot_pib, '../plots/qshare_pha_pib.eps', 'epsc');
+
+plot_l = figure(202);
+subplot(1 , 2, 1);
+plot(yrs, q_share30.L_NQ, '-', ...
+	yrs, q_share50.L_NQ, '--', ...
+	yrs, q_share30.L_Q, '-', ...
+	yrs, q_share50.L_Q, '--');
+legend('Base NQ', 'Q = +5%', 'Base Q', 'Q = +5%', ...
+	'Location', 'southoutside')
+title('Force Travail');
+
+subplot(1, 2, 2);
+plot(yrs, q_share30.nbar, '-', ...
+	yrs, q_share50.nbar, '--');
+legend('Base', 'Q = +5%', ...
+	'Location', 'southoutside')
+title('Travail Effectif');
+saveas(plot_l, '../plots/qshare_pha_labour.eps', 'epsc');
+
+plot_demo = figure(203);
+subplot(1,2,1);
+plot(yrs, q_share30.Ptot, '-', ...
+	yrs, q_share50.Ptot, '--');
+legend('Base', 'Q = +5%', ...
+	'Location', 'southoutside')
+title('Population');
+subplot(1,2,2);
+plot(yrs, q_share30.H, '-', ...
+	yrs, q_share50.H, '--');
+legend('Base', 'Q = +5%', ...
+	'Location', 'southoutside')
+title('Santé Totale');
+
+
+saveas(plot_demo, '../plots/qshare_pha_demoh.eps', 'epsc');
+
+

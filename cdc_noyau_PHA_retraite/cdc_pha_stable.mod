@@ -36,7 +36,7 @@ var y nbar Ptot Pret H;
 var cCheck;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-varexo A A_Q xpop;
+varexo A A_Q xpop shareq;
 
 @#for ql in qualif
 	% health stock or shocks?
@@ -91,7 +91,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   .1;         % productivity effect for health
+phi     =   .2;         % productivity effect for health
 % phi     =   0;         % productivity effect for health
 T       =   @{NT};          % working ages
 Tr      =   @{NTr};          % retirement ages
@@ -101,8 +101,8 @@ LS      =   T+Tr;       % total ages
 model;
 
 
-pi_NQ=.7;
-pi_Q=1-pi_NQ;
+pi_Q	=	shareq;
+pi_NQ	=	1-pi_Q;
 
 % double equations, blocs according to skill level
 @#for ql in qualif
@@ -206,16 +206,16 @@ initval;
 
 @#endfor
 
-H = 3000;
-nbar = 1.5;
+H = 1000;
+nbar = 13;
 A = 1;
 A_Q = 2;
 xpop = 1;
-
 pi_NQ = .7;
 pi_Q = .3;
-y = 1.5;
-Ptot = 3;
+shareq = .3;
+y = 6;
+Ptot = 15;
 cCheck = 0;
 
 
