@@ -4,8 +4,16 @@
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
-@#define NT=9                   //%  working ages
-@#define NTr=8                  //%  retirement ages
+@#ifdef work
+		@#define NT=work        //%  working ages
+	@#else
+		@#define NT=9
+@#endif
+@#ifdef pens
+		@#define NTr=pens		//%  retirement ages
+	@#else
+		@#define NTr=8          
+@#endif
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
@@ -29,10 +37,14 @@
 	% aggregates by skill class:
 	% -	L: aggregate labour
 	% - pi: share of first gen going for edu -- mirroring 
-	var L_@{ql} pi_@{ql};
+	var L_@{ql};
+    
 
 @#endfor
 
+var pi_Q;
+var pi_NQ;
+varexo shareq;
 var y nbar Ptot Pret H;
 var cCheck;
 
@@ -41,6 +53,7 @@ varexo A A_Q xpop;
 
 @#for ql in qualif
 	% health stock or shocks?
+    
 	varexo h_@{ql}_1;
 
 	@#for i in 2:NLS
@@ -84,7 +97,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   0;         % productivity effect for health
+phi     =   .2;         % productivity effect for health
 T       =   9;          % working ages
 Tr      =   8;          % retirement ages
 LS      =   T+Tr;       % total ages
@@ -93,7 +106,8 @@ LS      =   T+Tr;       % total ages
 model;
 
 
-pi_NQ=.7;
+
+pi_Q=shareq;
 pi_Q=1-pi_NQ;
 
 % double equations, blocs according to skill level
@@ -147,7 +161,6 @@ H = (
 % kbar is tot cap
 % nbar is tot labour
 y = A * nbar^alp;   
-
 % tot agg labour 
 % depends on health stock
 nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
@@ -175,10 +188,55 @@ end;
 
 %%%%%%%%%%%% STARTING VALS FOR STEADY STATE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % initvals and SS values from plain file
-load_params_and_steady_state('./output/ss_cdcredux_popbetasA_noy.txt');
+
+@#if defined(work)
+	load_params_and_steady_state('./output/ss_cdc_pha_work@{work*5+15}.txt');
+@#elseif defined(prodind)
+	load_params_and_steady_state('./output/ss_cdc_pha_pi@{prodind}.txt');
+@#else
+	% load_params_and_steady_state('./output/ss_cdc_pha.txt');
+	initval;
+		@#for ql in qualif
+			@#for i in 1:NLS
+				P_@{ql}_@{i}=1;
+			@#endfor
+		
+			h_@{ql}_1=100;
+			@#for i in 2:NLS
+				beta_@{ql}_@{i}=.9;
+				h_@{ql}_@{i}=100;
+		
+				% shocks are 0 at SS
+				med_@{ql}_@{i} = 0;
+				mig_@{ql}_@{i} = 0;
+			@#endfor
+			L_@{ql}=1.25;
+		
+		@#endfor
+		
+		H = 3000;
+		nbar = 1.5;
+		A = 1;
+		A_Q = 2;
+		xpop = 1;
+		pi_NQ = .7;
+		pi_Q = .3;
+		y = 1.5;
+		Ptot = 3;
+		cCheck = 0;
+		shareq = .3;
+		end;
+@#endif
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetasA_noy_CHOCS.txt');
+
+@#if defined(work)
+	save_params_and_steady_state('./output/ss_cdcdyn_pha_chocs_@{work*5+15}.txt');
+@#elseif defined(prodind)
+	save_params_and_steady_state('./output/ss_cdcdyn_pha_chocs_pi@{prodind}.txt');
+@#else
+	save_params_and_steady_state('./output/ss_cdcdyn_pha_chocs.txt');
+@#endif
 
 %%%%%% Shocks bloc %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 shocks;
@@ -187,11 +245,31 @@ shocks;
 	@#for s in qualif
 		var mig_@{s}_@{j};
 		periods 240:279;
-		values (s_mig_@{s}_@{j});
+		% 10% shock
+		@#if defined(mig10)
+			values (s_ten_mig_@{s}_@{j});
+		% old data
+		@#elseif defined(old_pop)
+			values (s_old_mig_@{s}_@{j});
+		% baseline
+		@#else
+			values (s_mig_@{s}_@{j});
+		@#endif
 
 		var med_@{s}_@{j};
 		periods 240:279;
-		values (1*s_med_@{s}_@{j});
+		@#if defined(med30)
+			% health shock to mid age
+			@#if med30==1
+			values (s_trent_med_@{s}_@{j});
+			% health shock to early age
+			@#elseif med30==2
+			values (s_vingt_med_@{s}_@{j});
+			@#endif
+		@#elseif !defined(med30)
+			%regular shocks
+			values (s_med_@{s}_@{j});
+		@#endif
 	@#endfor
 @#endfor
 
@@ -199,7 +277,13 @@ var xpop;
 periods 240:279;
 values (s_xpop);
 
-@#ifdef TFP
+@#ifdef q_shock
+	var shareq;
+	periods 260:276;
+	values .5;
+@#endif
+
+@#if defined(TFP)
 	var A;
 	periods 240:280;
 
@@ -212,7 +296,7 @@ values (s_xpop);
 	values (s_A_opt);
 	
 	@#elseif TFP == 2
-	% sans previsions
+	% sans previsions(s_A_eff);
 	values (s_A_eff);
 
 	@#elseif TFP == 3
@@ -226,9 +310,6 @@ values (s_xpop);
 	@#endif
 
 @#endif
-
-
-
 
 end;
 

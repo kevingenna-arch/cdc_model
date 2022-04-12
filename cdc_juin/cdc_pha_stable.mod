@@ -3,12 +3,20 @@
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
-@#define NT=9                   //%  working ages
-@#define NTr=8                  //%  retirement ages
+@#ifdef work
+		@#define NT=work        //%  working ages
+	@#else
+		@#define NT=9
+@#endif
+@#ifdef pens
+		@#define NTr=pens		//%  retirement ages
+	@#else
+		@#define NTr=8          
+@#endif
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "../matrices_chocs.m" 	//%  external file collecting *all* shocks
+@#include "../matrices_chocs.m" //%  load up shocks externally
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
@@ -36,7 +44,7 @@ var y nbar Ptot Pret H;
 var cCheck;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-varexo A A_Q xpop;
+varexo A A_Q xpop shareq;
 
 @#for ql in qualif
 	% health stock or shocks?
@@ -61,19 +69,25 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 @#endfor
 
 @#for i in 1:NT
-	% productivity by age
-	a_NQ_@{i}=.7+log(@{i})/10;
 	% switcher for education
 	e_NQ_@{i}=0;
 	@#if i <= NE
-		% values for prod and switcher for skills
-		a_Q_@{i}=.7+log(@{i})/10;
 		e_Q_@{i}=1;
 	@#else 
-		a_Q_@{i}=1+log(@{i})/10;
 		e_Q_@{i}=0;
 	@#endif
 @#endfor
+
+@#ifdef prodind
+		@#if prodind == 2
+			@#include "prodind_formcont.m"
+		@#elseif prodind == 3
+			@#include "prodind_socact.m"
+		@#endif
+	@#else
+	% fall back to standard
+	@#include "prodind_baseline.m"
+@#endif
 
 gam     =   1.5;        %
 gam1    =   .07;        %
@@ -83,17 +97,18 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   0;         % productivity effect for health
-T       =   9;          % working ages
-Tr      =   8;          % retirement ages
+phi     =   .2;         % productivity effect for health
+% phi     =   0;         % productivity effect for health
+T       =   @{NT};          % working ages
+Tr      =   @{NTr};          % retirement ages
 LS      =   T+Tr;       % total ages
 
 %%%%% MODEL SPECIFICATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 model;
 
 
-pi_NQ=.7;
-pi_Q=1-pi_NQ;
+pi_Q	=	shareq;
+pi_NQ	=	1-pi_Q;
 
 % double equations, blocs according to skill level
 @#for ql in qualif
@@ -197,26 +212,31 @@ initval;
 
 @#endfor
 
-H = 3000;
-nbar = 1.5;
+H = 1000;
+nbar = 13;
 A = 1;
 A_Q = 2;
 xpop = 1;
-
 pi_NQ = .7;
 pi_Q = .3;
-y = 1.5;
-Ptot = 3;
+shareq = .3;
+y = 6;
+Ptot = 15;
 cCheck = 0;
-
-
 end;
 
-% resid;
 
 steady;
-save_params_and_steady_state('./output/ss_cdcredux_popbetasA_noy.txt');
-
+@#ifdef work
+		save_params_and_steady_state('./output/ss_cdc_pha_work@{work*5+15}.txt');
+	@#else
+	@#ifdef prodind
+		save_params_and_steady_state('./output/ss_cdc_pha_pi@{prodind}.txt');
+	@#else
+		save_params_and_steady_state('./output/ss_cdc_pha.txt');
+	@#endif
+@#endif
+		
 %%%%% SOLVER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(
