@@ -4,20 +4,12 @@
 
 % Set up vars for loops
 @#define NE=1 					//%  ages of edu
-@#ifdef work
-		@#define NT=work        //%  working ages
-	@#else
-		@#define NT=9
-@#endif
-@#ifdef pens
-		@#define NTr=pens		//%  retirement ages
-	@#else
-		@#define NTr=8          
-@#endif
+@#define NT=work                   //%  working ages
+@#define NTr=pens                  //%  retirement ages
 @#define NLS=NT+NTr             //%  total ages
 @#define IR=5                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
-@#include "../matrices_chocs.m" //%	 load up shocks externally
+@#include "../matrices_chocs.m" 	//%  load up shocks externally
 
 %%%%% ENDOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % endogenous vars from agents' maxing programs, by skill level
@@ -129,7 +121,7 @@ rho     =   .5;         %
 beta    =   0.97;       % discount factor
 delta   =   0.02;       % physical capital depreciation
 deltah  =   0.02;       % health depreciation
-phi     =   .2;         % health interaction with y
+phi     =   0;          %
 T       =   @{NT};      % working ages
 Tr      =   @{NTr};     % retirement ages
 LS      =   T+Tr;       % total ages
@@ -501,98 +493,91 @@ cCheck=y + Kmig - (c + I + g + Deped);
 
 end;
 
-/*
-initval;
-% initival provides initial guesses for solving for the actual SS
-% which can differ from initial values
 
-@#for ql in qualif
+@#ifdef prodind
+    initval;
+    % initival provides initial guesses for solving for the actual SS
+    % which can differ from initial values
+    
+    @#for ql in qualif
+    
+	    @#for i in 1:NLS
+		    k_@{ql}_@{i} = 5;
+		    lamda_@{ql}_@{i} =1;
+		    c_@{ql}_@{i}=1;
+		    P_@{ql}_@{i}=.9;
+	    @#endfor
+    
+	    h_@{ql}_1=100;
+	    @#for i in 2:NLS
+		    beta_@{ql}_@{i}=.9;
+		    h_@{ql}_@{i}=100;
+    
+            med_@{ql}_@{i} = 0;
+            mig_@{ql}_@{i} = 0;
+	    @#endfor
+    
+	    @#for i in 1:NT
+		    lab_@{ql}_@{i}=.7;
+		    w_@{ql}_@{i}=.1;
+	    @#endfor
+    
+	    @#for i in NT+1:NLS
+		    pen_@{ql}_@{i}=.2;
+	    @#endfor
+    
+	    penind_@{ql}=1;
+	    k_@{ql}_1=0;
+    
+	    MPL_@{ql}=.6;
+	    L_@{ql}=15;
+    
+    @#endfor
+    
+    
+    c      		=	40;
+    y      		=	50;
+    r      		=	0.09;
+    kbar   		=	150;
+    nbar    	=  	30;
+    Tw 			=	12;
+    beq 		=	.01;
+    Kmig		= 	0;
+    Tk			=	1;
+    Tc			=	1;
+    Pret		=	5;
+    Ptot		=	15;
+    H 			= 	100;
+    retire 		= 	5;
+    penbase		= 	1;
+    rd 			=	.09;
+    D			=	1;
+    I			=	1;
+    Def 		=	1;
+    rhop		=	.5;
+    tauw		=	.2;
+    
+    
+    
+    lambb   	=    50;
+    lambbb  	=    -50;
+    v 			=	.8;
+    tauc 		=	.1;
+    tauf 		=	.35;
+    tauk 		=	.2;
+    A 			= 	1;
+    A_Q 		= 	2;
+    
+    xpop    	=    1;
+    
+    
+    end;
+@#else
+    load_params_and_steady_state('./output/ss_cdc.txt');
+@#endif
 
- @#for i in 1:NLS
-  k_@{ql}_@{i} = 5;
-  lamda_@{ql}_@{i} =1;
-  c_@{ql}_@{i}=1;
-  P_@{ql}_@{i}=.9;
- @#endfor
-
- h_@{ql}_1=100;
- @#for i in 2:NLS
-  beta_@{ql}_@{i}=.9;
-  h_@{ql}_@{i}=100;
-
-        med_@{ql}_@{i} = 0;
-        mig_@{ql}_@{i} = 0;
- @#endfor
-
- @#for i in 1:NT
-  lab_@{ql}_@{i}=.7;
-  w_@{ql}_@{i}=.1;
- @#endfor
-
- @#for i in NT+1:NLS
-  pen_@{ql}_@{i}=.2;
- @#endfor
-
- penind_@{ql}=1;
- k_@{ql}_1=0;
-
- MPL_@{ql}=.6;
- L_@{ql}=15;
-
-@#endfor
-
-
-c      		=	40;
-y      		=	50;
-r      		=	0.09;
-kbar   		=	150;
-nbar    	=  	30;
-Tw 			=	12;
-beq 		=	.01;
-Kmig		= 	0;
-Tk			=	1;
-Tc			=	1;
-Pret		=	5;
-Ptot		=	15;
-H 			= 	100;
-retire 		= 	5;
-penbase		= 	1;
-rd 			=	.09;
-D			=	1;
-I			=	1;
-Def 		=	1;
-rhop		=	.5;
-tauw		=	.2;
-pi_Q 		= 	.3;
-pi_NQ		=	.7;
-
-
-
-lambb   	=    50;
-lambbb  	=    -50;
-v 			=	.8;
-tauc 		=	.1;
-tauf 		=	.35;
-tauk 		=	.2;
-A 			= 	1;
-A_Q 		= 	2;
-
-xpop    	=    1;
-
-end;
-*/
-
-load_params_and_steady_state('./output/ss_cdc.txt');
 
 steady;
-
-@#if defined(retrat)
-	save_params_and_steady_state('./output/ss_cdc_full_work@{work*5+15}_ratio@{retrat}.txt');
-	@#elseif defined(work)
-	save_params_and_steady_state('./output/ss_cdc_full_work@{work*5+15}.txt');
-	@#elseif !defined(work)
-	save_params_and_steady_state('./output/ss_cdc.txt');
-@#endif
 
 perfect_foresight_setup(periods = 10);
 perfect_foresight_solver(

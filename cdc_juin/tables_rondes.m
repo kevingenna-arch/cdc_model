@@ -1,7 +1,5 @@
 %% Pre-setup
 
-% years axis
-yrs = [1900:5:2095];
 
 % run two clean models for SS
 dynare cdc_full_base_retraite nolog nopreprocessoroutput;
@@ -29,32 +27,36 @@ allsims.demograph = demograph;
 dynare cdc_pha -DTFP=100 nolog nopreprocessoroutput;
 tech_base = simuls(241:280, :);
 tech_base.mod = repmat({'base'}, height(tech_base), 1);
+tech_base.t = (1:height(tech_base))';
 
 % pessimist: dA = 1 %
 dynare cdc_pha -DTFP=0 nolog nopreprocessoroutput;
 tech_pess = simuls(241:280, :);
 tech_pess.mod = repmat({'pess'}, height(tech_pess), 1);
+tech_pess.t = (1:height(tech_pess))';
 
 
 % optimist: 1.8 %
 dynare cdc_pha -DTFP=1 nolog nopreprocessoroutput;
 tech_opt = simuls(241:280, :);
 tech_opt.mod = repmat({'opt'}, height(tech_opt), 1);
+tech_opt.t = (1:height(tech_opt))';
 
 
 % disaster: .25%
 dynare cdc_pha -DTFP=3 nolog nopreprocessoroutput;
 tech_dis = simuls(241:280, :);
 tech_dis.mod = repmat({'low'}, height(tech_dis), 1);
+tech_dis.t = (1:height(tech_dis))';
 
 % no forecasts: from 2030 onwards no growth at all
 dynare cdc_pha -DTFP=2 nolog nopreprocessoroutput;
 tech_hist = simuls(241:280, :);
 tech_hist.mod = repmat({'hist'}, height(tech_hist), 1);
+tech_hist.t = (1:height(tech_hist))';
 
 
 tech = vertcat(tech_base, tech_opt, tech_hist, tech_dis, tech_pess);
-tech.t = (1:height(tech))';
 tech = stack(tech, 1:(width(tech)-2));
 tech.Properties.VariableNames = {'mod', 'period', 'variable', 'value'};
 allsims.tech = tech;
@@ -327,6 +329,3 @@ health = stack(health, 1:(width(health)-2));
 health.Properties.VariableNames = {'mod', 'period', 'variable', 'value'};
 allsims.health = health;
 writetable(health, '../output/tr3_health_dyn.csv');
-
-
-%% Plots
