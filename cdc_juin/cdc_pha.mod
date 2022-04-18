@@ -283,8 +283,8 @@ periods 240:279;
 
 @#ifdef q_shock
 	var shareq;
-	periods 260:276;
-	values .5;
+	periods 264:279;
+	values .35;
 @#endif
 
 @#if defined(TFP)

@@ -294,7 +294,7 @@ share_base.t = (1:height(share_base))';
 % share tick
 dynare cdc_pha -DTFP=100 -Dq_shock=3 nolog nopreprocessoroutput;
 share_up = simuls(241:280, :);
-share_up.mod = repmat({'base'}, height(share_up), 1);
+share_up.mod = repmat({'shock'}, height(share_up), 1);
 share_up.t = (1:height(share_up))';
 
 share = vertcat(share_base, share_up);

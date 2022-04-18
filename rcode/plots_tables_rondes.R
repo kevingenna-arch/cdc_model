@@ -7,7 +7,9 @@ library(tidyverse)
 library(R.matlab)
 library(matlabr)
 library(xtable)
-options(xtable.include.rownames = F, xtable.floating = F, xtable.latex.environment = F)
+options(xtable.include.rownames = F,
+        xtable.floating = F,
+        xtable.latex.environment = F)
 
 # find matlab and run the script generating the files
 get_matlab()
@@ -876,5 +878,397 @@ ggsave(filename = "tr2_prodind_ss_lvl_pen.eps",
 plot_prodind_ss_w_pct <- prodind_ss %>%
   filter(vars == "w" & mod != 'Base') %>%
   ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0) +
   geom_line() + theme_minimal() + xlab('') + ylab('') +
   theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_c_pct <- prodind_ss %>%
+  filter(vars == "c" & variable != 'c' & mod != 'Base') %>%
+  ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_k_pct <- prodind_ss %>%
+  filter(vars == "k" & mod != 'Base') %>%
+  ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_welf_pct <- prodind_ss %>%
+  filter(vars == "welf" & mod != 'Base') %>%
+  ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_lab_pct <- prodind_ss %>%
+  filter(vars == "lab" & mod != 'Base') %>%
+  ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_pen_pct <- prodind_ss %>%
+  filter(vars == "pen" & mod != 'Base') %>%
+  ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+
+ggsave(filename = "tr2_prodind_ss_pct_wage.eps",
+       plot = plot_prodind_ss_w_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_pct_conso.eps",
+       plot = plot_prodind_ss_c_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_pct_k.eps",
+       plot = plot_prodind_ss_k_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_pct_welf.eps",
+       plot = plot_prodind_ss_welf_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_pct_labsupp.eps",
+       plot = plot_prodind_ss_lab_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_pct_pen.eps",
+       plot = plot_prodind_ss_pen_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+# tables in lvl
+
+prodind_ss_lvl_macro <- prodind_ss %>%
+  filter(variable %in% c('y', 'nbar', 'c', 'L_Q', 'L_NQ', 'kbar', 'H', 'I', 'R', 'rd')) %>%
+  select(-variable, -cohort, -value_pct) %>%
+  pivot_wider(names_from = mod,
+              values_from = value)
+
+prodind_ss_lvl_macro %>%
+  xtable() %>%
+  print(type = 'latex',
+        file = '../output/tr2_prodind_ss_macro_lvl.tex')
+
+prodind_ss_lvl_fiscal <- prodind_ss %>%
+  filter(grepl('ratio', vars) |
+           grepl('tau', vars) |
+           grepl('T', vars) |
+           vars %in% c("g", "D", "penbase", "penind", "retire", "Deped")) %>%
+  select(mod, vars, skill, value, -cohort, -variable) %>%
+  pivot_wider(names_from = mod,
+              values_from = value)
+
+prodind_ss_lvl_fiscal %>%
+  xtable() %>%
+  print(type = 'latex',
+        file = '../output/tr2_prodind_ss_fiscal_lvl.tex')
+
+
+## tables in pct
+prodind_ss_pct_macro <- prodind_ss %>%
+  filter(variable %in% c('y', 'nbar', 'c', 'L_Q', 'L_NQ', 'kbar', 'H', 'I', 'R', 'rd')) %>%
+  select(-variable, -cohort, -value) %>%
+  pivot_wider(names_from = mod,
+              values_from = value_pct) %>%
+  select(-Base)
+
+prodind_ss_pct_macro %>%
+  xtable() %>%
+  print(type = 'latex',
+        file = '../output/tr2_prodind_ss_macro_pct.tex')
+
+prodind_ss_pct_fiscal <- prodind_ss %>%
+  filter(grepl('ratio', vars) |
+           grepl('tau', vars) |
+           grepl('T', vars) |
+           vars %in% c("g", "D", "penbase", "penind", "retire", "Deped")) %>%
+  select(mod, vars, skill, value_pct, -cohort, -variable) %>%
+  pivot_wider(names_from = mod,
+              values_from = value_pct )%>%
+  select(-Base)
+
+prodind_ss_pct_fiscal %>%
+  xtable() %>%
+  print(type = 'latex',
+        file = '../output/tr2_prodind_ss_fiscal_pct.tex')
+
+
+
+# TR2: dynamic effects of individual productivities -----------------------
+
+
+prodind_dyn <- read_csv('../output/tr2_skill_dyn.csv',
+                        show_col_types = F) %>%
+  separate(variable,
+           into = c("vars", "skill", "cohort"),
+           sep = '_',
+           remove = F,
+           convert = T) %>%
+  mutate(skill = factor(skill),
+         cohort = cohort*5+15,
+         period = period*5+1900,
+         mod = case_when(
+           mod == 'base' ~ "Base",
+           mod == 'fc' ~ "Form. Cont.",
+           mod == 'as' ~ "Form. Preretr.",
+         ),
+         mod = factor(mod)) %>%
+  mutate(value_pct = 100*(value/value[mod == 'Base'] - 1))
+
+
+## plots in level
+
+plot_prodind_dyn_y_lvl <- prodind_dyn %>%
+  filter(vars == 'y') %>%
+  ggplot(aes(x = period, y = value, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_dyn_nbar_lvl <- prodind_dyn %>%
+  filter(vars == 'nbar') %>%
+  ggplot(aes(x = period, y = value, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_dyn_lab_lvl <- prodind_dyn %>%
+  filter(vars == 'L') %>%
+  ggplot(aes(x = period,
+             y = value,
+             colour = mod,
+             group = interaction(mod, skill),
+             linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+
+
+ggsave(filename = "tr2_prodind_dyn_lvl_y.eps",
+       plot = plot_prodind_dyn_y_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_dyn_lvl_nbar.eps",
+       plot = plot_prodind_dyn_nbar_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_dyn_lvl_labour.eps",
+       plot = plot_prodind_dyn_lab_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+
+## plots in pct
+
+plot_prodind_dyn_y_pct <- prodind_dyn %>%
+  filter(vars == 'y' & mod != 'Base') %>%
+  ggplot(aes(x = period, y = value_pct, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_dyn_nbar_pct <- prodind_dyn %>%
+  filter(vars == 'nbar' & mod != 'Base') %>%
+  ggplot(aes(x = period, y = value_pct, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_dyn_lab_pct <- prodind_dyn %>%
+  filter(vars == 'L' & mod != 'Base') %>%
+  ggplot(aes(x = period,
+             y = value_pct,
+             colour = mod,
+             group = interaction(mod, skill),
+             linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+
+
+ggsave(filename = "tr2_prodind_dyn_pct_y.eps",
+       plot = plot_prodind_dyn_y_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_dyn_pct_nbar.eps",
+       plot = plot_prodind_dyn_nbar_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_dyn_pct_labour.eps",
+       plot = plot_prodind_dyn_lab_pct,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+# tables in pct
+
+prodind_dyn %>%
+  filter(vars %in% c('nbar', 'y', 'H', 'L', 'Ptot') &
+           period %in% yrs &
+           mod != 'Base') %>%
+  select(-cohort, -value, -variable) %>%
+  pivot_wider(names_from = 'period',
+              values_from = 'value_pct') %>%
+  arrange(mod, desc(vars), skill) %>%
+  xtable() %>%
+  print(type = 'latex', file = '../output/tr2_prodind_dyn.tex')
+
+
+
+# TR2: skill incentive +5% ------------------------------------------------
+
+skill_dyn <- read_csv('../output/tr2_skilledshock_dyn.csv',
+                      show_col_types = F) %>%
+  separate(variable,
+           into = c("vars", "skill", "cohort"),
+           sep = '_',
+           remove = F,
+           convert = T) %>%
+  mutate(skill = factor(skill),
+         cohort = cohort*5+15,
+         period = period*5+1900,
+         mod = case_when(
+           mod == 'base' ~ "Base",
+           mod == 'shock' ~ "Choc +5%",
+         ),
+         mod = factor(mod)) %>%
+  mutate(value_pct = 100*(value/value[mod == 'Base'] - 1))
+
+# plots in levels
+
+plot_skill_dyn_y_lvl <- skill_dyn %>%
+  filter(vars == 'y') %>%
+  ggplot(aes(x = period, y = value, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_skill_dyn_L_lvl <- skill_dyn %>%
+  filter(vars == 'L') %>%
+  ggplot(aes(x = period, y = value, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_skill_dyn_nbar_lvl <- skill_dyn %>%
+  filter(vars == 'nbar') %>%
+  ggplot(aes(x = period, y = value, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_skill_dyn_ptot_lvl <- skill_dyn %>%
+  filter(vars == 'Ptot') %>%
+  ggplot(aes(x = period, y = value, colour = mod)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+
+ggsave(filename = "tr2_skill_dyn_lvl_pib.eps",
+       plot = plot_skill_dyn_y_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+
+ggsave(filename = "tr2_skill_dyn_lvl_labour.eps",
+       plot = plot_skill_dyn_L_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+
+ggsave(filename = "tr2_skill_dyn_lvl_nbar.eps",
+       plot = plot_skill_dyn_nbar_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_skill_dyn_lvl_poptot.eps",
+       plot = plot_skill_dyn_ptot_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+
+# tables in pct
+
+skill_dyn %>%
+  filter(vars %in% c('nbar', 'y', 'H', 'L', 'Ptot') &
+           period %in% yrs &
+           mod != 'Base') %>%
+  select(-cohort, -value, -variable) %>%
+  pivot_wider(names_from = 'period',
+              values_from = 'value_pct') %>%
+  arrange(mod, desc(vars), skill) %>%
+  select(-mod) %>%
+  xtable() %>%
+  print(type = 'latex', file = '../output/tr2_skill_dyn.tex')
