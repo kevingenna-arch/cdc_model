@@ -551,7 +551,8 @@ I			=	1;
 Def 		=	1;
 rhop		=	.5;
 tauw		=	.2;
-
+pi_Q 		= 	.3;
+pi_NQ 		=	.7;
 
 
 lambb   	=    50;

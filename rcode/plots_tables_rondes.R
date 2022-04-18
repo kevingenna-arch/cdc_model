@@ -595,7 +595,7 @@ pens_dyn_pib <- pens_dyn %>%
   # pct deviations from baseline
   mutate(value_pctdev = 100*(value_norm/value_norm[mod == 60] - 1)) %>%
   group_by(mod) %>%
-  mutate(mm = mean(value_pctdev)) %>%
+  mutate(mm = mean(value_pctdev[period>=2020])) %>%
   ungroup()
 
 plot_pens_dyn_pib_norm <- pens_dyn_pib %>%
@@ -755,3 +755,126 @@ mig_dyn %>%
   print(type = 'latex', file = '../output/tr1_mig_dyn.tex')
 
 
+
+# TR2: competences --------------------------------------------------------
+
+
+prodind_ss <- read_csv('../output/tr2_skill_ss.csv',
+                       show_col_types = F) %>%
+  separate(variable,
+           into = c("vars", "skill", "cohort"),
+           sep = '_',
+           remove = F,
+           convert = T) %>%
+  mutate(skill = factor(skill),
+         cohort = cohort*5+15,
+         mod = case_when(
+           mod == 'base' ~ "Base",
+           mod == 'FC' ~ "Form. Cont.",
+           mod == 'AS' ~ "Form. Preretr.",
+         ),
+         mod = factor(mod)) %>%
+  mutate(value_pct = 100*(value/value[mod == 'Base'] - 1))
+
+## plots in levels
+
+plot_prodind_ss_w_lvl <- prodind_ss %>%
+  filter(vars == "w") %>%
+  ggplot(aes(x = cohort, y = value, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_c_lvl <- prodind_ss %>%
+  filter(vars == "c" & variable != 'c') %>%
+  ggplot(aes(x = cohort, y = value, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_k_lvl <- prodind_ss %>%
+  filter(vars == "k") %>%
+  ggplot(aes(x = cohort, y = value, colour = mod, linetype = skill)) +
+  geom_hline(yintercept=0)+
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_welf_lvl <- prodind_ss %>%
+  filter(vars == "welf") %>%
+  ggplot(aes(x = cohort, y = value, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_lab_lvl <- prodind_ss %>%
+  filter(vars == "lab") %>%
+  ggplot(aes(x = cohort, y = value, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+plot_prodind_ss_pen_lvl <- prodind_ss %>%
+  filter(vars == "pen") %>%
+  ggplot(aes(x = cohort, y = value, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
+
+
+ggsave(filename = "tr2_prodind_ss_lvl_wage.eps",
+       plot = plot_prodind_ss_w_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_lvl_conso.eps",
+       plot = plot_prodind_ss_c_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_lvl_k.eps",
+       plot = plot_prodind_ss_k_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_lvl_welf.eps",
+       plot = plot_prodind_ss_welf_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_lvl_labsupp.eps",
+       plot = plot_prodind_ss_lab_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+ggsave(filename = "tr2_prodind_ss_lvl_pen.eps",
+       plot = plot_prodind_ss_pen_lvl,
+       device = 'eps',
+       path = "../plots/",
+       units = 'in',
+       dpi = 'retina',
+       width = 8,
+       height = 4.5)
+
+
+## plots in pct
+
+plot_prodind_ss_w_pct <- prodind_ss %>%
+  filter(vars == "w" & mod != 'Base') %>%
+  ggplot(aes(x = cohort, y = value_pct, colour = mod, linetype = skill)) +
+  geom_line() + theme_minimal() + xlab('') + ylab('') +
+  theme(legend.title = element_blank(), legend.position="bottom")
