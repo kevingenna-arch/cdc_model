@@ -267,7 +267,7 @@ poplot4 = poplot3.drop(['pop', 'pop_lab'], axis=1) \
 
 
 fig_new_pc = plt.figure(figsize=(16/1.5,9/1.5))
-plt.stackplot(poplot4['cohort'], poplot4['J'], poplot4['A'], poplot4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+plt.stackplot(poplot4['cohort'], poplot4['J'], poplot4['A'], poplot4['I'], labels=['Pop. Jeune', 'Pop. en Age Active', 'Pop. en Age de Retraite'])
 fig_new_pc.autofmt_xdate()
 plt.grid(axis='both', alpha=0.5)
 plt.legend(loc='upper left')
@@ -286,7 +286,7 @@ poplot5 = poplot3 \
                     .reset_index()
 
 fig_new_lvl = plt.figure(figsize=(16/1.5,9/1.5))
-plt.stackplot(poplot5['cohort'], poplot5['J'], poplot5['A'], poplot5['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+plt.stackplot(poplot5['cohort'], poplot5['J'], poplot5['A'], poplot5['I'], labels = ['Pop. Jeune', 'Pop. en Age Active', 'Pop. en Age de Retraite'])
 fig_new_lvl.autofmt_xdate()
 plt.legend(loc='upper left')
 plt.locator_params(axis='x', nbins=10)
@@ -344,7 +344,7 @@ plo4 = plo3.drop(['pop', 'pop_lab'], axis=1) \
                         .reset_index()
 
 fig_old_pc = plt.figure(figsize=(16/1.5,9/1.5))
-plt.stackplot(plo4['cohort'], plo4['J'], plo4['A'], plo4['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+plt.stackplot(plo4['cohort'], plo4['J'], plo4['A'], plo4['I'], labels=['Pop. Jeune', 'Pop. en Age Active', 'Pop. en Age de Retraite'])
 fig_old_pc.autofmt_xdate()
 plt.grid(axis='both', alpha=0.5)
 plt.legend(loc='upper left')
@@ -363,7 +363,7 @@ plo5 = plo3 \
                     .reset_index()
 
 fig_old_lvl = plt.figure(figsize=(16/1.5,9/1.5))
-plt.stackplot(plo5['cohort'], plo5['J'], plo5['A'], plo5['I'], labels=['Pop. Jeune', 'Pop. Active', 'Pop. Inactive'])
+plt.stackplot(plo5['cohort'], plo5['J'], plo5['A'], plo5['I'], labels=['Pop. Jeune', 'Pop. en Age Active', 'Pop. en Age de Retraite'])
 fig_old_lvl.autofmt_xdate()
 plt.grid(axis='both', alpha=0.5)
 plt.legend(loc='upper left')
