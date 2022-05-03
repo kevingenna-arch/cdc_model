@@ -578,13 +578,15 @@ A 			= 	1;
 A_Q 		= 	2;
 
 xpop    	=    1;
+rhop 		=	 1;
 
 end;
 */
 
 load_params_and_steady_state('./output/ss_cdc.txt');
-
 steady;
+
+% save_params_and_steady_state('./ss_cdc_rho.txt');
 
 @#if defined(retrat)
 	save_params_and_steady_state('./output/ss_cdc_full_work@{work*5+15}_ratio@{retrat}.txt');
