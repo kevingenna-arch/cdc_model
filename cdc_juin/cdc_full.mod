@@ -65,7 +65,7 @@
 
 var Kmig y1 cCheck;
 
-var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk penbase retire Def D lambc Defratio Dratio Gratio Penratio Edratio Tkratio Tcratio Twratio rhop tauw tauk tauc v;
+var y c I g r kbar nbar Ptot Pret Tw Deped rd H R beq Tc Tk  retire Def D lambc Defratio Dratio Gratio Penratio Edratio Tkratio Tcratio Twratio rhop tauw tauk tauc v;
 
 %%%%% EXOGENOUS VARS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 varexo A tauf xpop lambb lambbb A_Q;
@@ -107,6 +107,8 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 			@#include "prodind_formcont.m"
 		@#elseif prodind == 3
 			@#include "prodind_socact.m"
+		@#elseif prodind == 4
+			@#include "prodind_boost.m"
 		@#endif
 	@#else
 	% fall back to standard
@@ -310,19 +312,6 @@ Ptot*beq= (
 );
 
 
-% Retirement -- regular
-% this at individual level
-penbase =  ((@{NT-NE}/(@{NT-NE}+@{NT}))*(
-@#for i in NE+1:NT
-    + (1-tauw)*w_Q_@{i}*lab_Q_@{i}
-@#endfor
-))
-+
-((@{NT}/(@{NT-NE}+@{NT}))*(
-@#for i in 1:NT
-    + (1-tauw)*w_NQ_@{i}*lab_NQ_@{i}
-@#endfor
-));
 
 % retirement indexation
 @#for ql in qualif
@@ -337,7 +326,7 @@ penbase =  ((@{NT-NE}/(@{NT-NE}+@{NT}))*(
 	% weighting both pensions schemes
 	@#for i in NT+1:NLS
 		% rhop gives the balance, by now tunred off the base pens
-		pen_@{ql}_@{i}  = 0*(1-rhop)*penbase + rhop * penind_@{ql}(@{NT-i}); 
+		pen_@{ql}_@{i}  =  rhop * penind_@{ql}(@{NT-i}); 
 	@#endfor
 
 @#endfor
@@ -549,7 +538,6 @@ end;
     Ptot		=	15;
     H 			= 	100;
     retire 		= 	5;
-    penbase		= 	1;
     rd 			=	.09;
     D			=	1;
     I			=	1;
@@ -563,7 +551,7 @@ end;
     lambbb  	=    -50;
     v 			=	.8;
     tauc 		=	.1;
-    tauf 		=	.35;
+    tauf 		=	.25;
     tauk 		=	.2;
     A 			= 	1;
     A_Q 		= 	2;

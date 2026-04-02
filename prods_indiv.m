@@ -28,3 +28,11 @@ plot(x*5 + 20, 1.1 + normpdf(x, 6+2, 3/1), ...
 legend('Q', 'NQ', 'Location','southeast')
 title('Activités Socialisés')
 ylim([.6 1.3])
+
+
+hold on 
+plot(x*5 + 20, 1 + log(x)/10, ...
+     x*5 + 20, .7 + log(x)/10);
+plot(x*5 + 20, 1.1 + normpdf(x, 6, 3/1.2), ...
+     x*5 + 20, .8 + normpdf(x, 6, 4/1.2));
+legend('Q', 'NQ', 'Location','southeast')

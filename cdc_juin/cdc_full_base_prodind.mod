@@ -107,6 +107,8 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 			@#include "prodind_formcont.m"
 		@#elseif prodind == 3
 			@#include "prodind_socact.m"
+		@#elseif prodind == 4
+			@#include "prodind_boost.m"
 		@#endif
 	@#else
 	% fall back to standard
@@ -549,7 +551,7 @@ rd 			=	.09;
 D			=	1;
 I			=	1;
 Def 		=	1;
-rhop		=	1;
+rhop		=	.5;
 tauw		=	.2;
 pi_Q 		= 	.3;
 pi_NQ 		=	.7;

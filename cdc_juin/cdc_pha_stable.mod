@@ -14,7 +14,7 @@
 		@#define NTr=8          
 @#endif
 @#define NLS=NT+NTr             //%  total ages
-@#define IR=5                   //%  retirement wage indexation ages
+@#define IR=NT                   //%  retirement wage indexation ages
 @#define qualif = ["Q","NQ"]    //%  skill levels
 @#include "../matrices_chocs.m" //%  load up shocks externally
 
@@ -83,6 +83,8 @@ parameters alp, beta, delta, Tr, T, LS, gam, gam1, deltah, phi, eta, rho;
 			@#include "prodind_formcont.m"
 		@#elseif prodind == 3
 			@#include "prodind_socact.m"
+		@#elseif prodind == 4
+			@#include "prodind_boost.m"
 		@#endif
 	@#else
 	% fall back to standard
@@ -164,7 +166,7 @@ y = A * nbar^alp;
 
 % tot agg labour 
 % depends on health stock
-nbar = H(-1)^phi*(eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
+nbar = (eta*(A_Q*L_Q)^rho + (1-eta)*L_NQ^rho)^(1/rho);
 
 % total labour by skill
 % accounts for number and prod
@@ -215,7 +217,7 @@ initval;
 H = 1000;
 nbar = 13;
 A = 1;
-A_Q = 2;
+A_Q = 1;
 xpop = 1;
 pi_NQ = .7;
 pi_Q = .3;

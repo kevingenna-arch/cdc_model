@@ -1,8 +1,9 @@
 %% Pre-setup
 
+addpath C:\dynare\dynare-5.0\matlab
 
 % run two clean models for SS
-dynare cdc_full_base_retraite nolog nopreprocessoroutput;
+%dynare cdc_full_new_ss nolog nopreprocessoroutput;
 dynare cdc_pha_stable nolog nopreprocessoroutput;
 
 clear all
@@ -67,25 +68,25 @@ writetable(tech, '../output/tr0_tech.csv');
 % Reforme des retraites: maquette complete
 
 % base
-dynare cdc_full_base_retraite -Dwork=9 -Dpens=8 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dwork=9 -Dpens=8 nolog nopreprocessoroutput;
 pens_base = simuls(2,:);
 pens_base.mod = {'age_60'};
 pens_base = stack(pens_base, 1:(width(pens_base)-1));
 
 % 55
-dynare cdc_full_base_retraite -Dwork=8 -Dpens=9 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dwork=8 -Dpens=9 nolog nopreprocessoroutput;
 pens_gen = simuls(2,:);
 pens_gen.mod = {'age_55'};
 pens_gen = stack(pens_gen, 1:(width(pens_gen)-1));
 
 % 65
-dynare cdc_full_base_retraite -Dwork=10 -Dpens=7 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dwork=10 -Dpens=7 nolog nopreprocessoroutput;
 pens_mac = simuls(2,:);
 pens_mac.mod = {'age_65'};
 pens_mac = stack(pens_mac, 1:(width(pens_mac)-1));
 
 % 70
-dynare cdc_full_base_retraite -Dwork=11 -Dpens=6 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dwork=11 -Dpens=6 nolog nopreprocessoroutput;
 pens_fried = simuls(2,:);
 pens_fried.mod = {'age_70'};
 pens_fried = stack(pens_fried, 1:(width(pens_fried)-1));
@@ -101,28 +102,28 @@ writetable(pensions, '../output/tr1_pensions_ss.csv')
 % Reforme des retraites: maquette complete et deficits
 
 % base
-dynare cdc_full_base_retraite -Dretrat=.14 -Dwork=9 -Dpens=8 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dretrat=.14 -Dwork=9 -Dpens=8 nolog nopreprocessoroutput;
 pens_base_def = simuls(2,:);
 pens_base_def.mod = {'age_60'};
 pens_base_def.retg = .14;
 pens_base_def = stack(pens_base_def, 1:(width(pens_base_def)-2));
 
 % 55
-dynare cdc_full_base_retraite -Dretrat=.17 -Dwork=8 -Dpens=9 -Dnolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dretrat=.17 -Dwork=8 -Dpens=9 -Dnolog nopreprocessoroutput;
 pens_gen_def = simuls(2,:);
 pens_gen_def.mod = {'age_55'};
 pens_gen_def.retg = .17;
 pens_gen_def = stack(pens_gen_def, 1:(width(pens_gen_def)-2));
 
 % 65
-dynare cdc_full_base_retraite -Dretrat=.12 -Dwork=10 -Dpens=7 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dretrat=.12 -Dwork=10 -Dpens=7 nolog nopreprocessoroutput;
 pens_mac_def = simuls(2,:);
 pens_mac_def.mod = {'age_65'};
 pens_mac_def.retg = .12;
 pens_mac_def = stack(pens_mac_def, 1:(width(pens_mac_def)-2));
 
 % 70
-dynare cdc_full_base_retraite -Dretrat=.1 -Dwork=11 -Dpens=6 nolog nopreprocessoroutput;
+dynare cdc_full_new_ss -Dretrat=.1 -Dwork=11 -Dpens=6 nolog nopreprocessoroutput;
 pens_fried_def = simuls(2,:);
 pens_fried_def.mod = {'age_70'};
 pens_fried_def.retg = .1;
@@ -244,7 +245,12 @@ dynare cdc_full_base_prodind -Dprodind=3 nolog nopreprocessoroutput;
 prodind_full_as = simuls(2,:);
 prodind_full_as.mod = {'AS'};
 
-prodind_full = vertcat(prodind_full_base, prodind_full_fc, prodind_full_as);
+% FC+AS
+dynare cdc_full_base_prodind -Dprodind=4 nolog nopreprocessoroutput;
+prodind_full_bo = simuls(2,:);
+prodind_full_bo.mod = {'bo'};
+
+prodind_full = vertcat(prodind_full_base, prodind_full_fc, prodind_full_as, prodind_full_bo);
 prodind_full = stack(prodind_full, 1:(width(prodind_full)-1));
 prodind_full.Properties.VariableNames = {'mod', 'variable', 'value'};
 allsims.prodind_full = prodind_full;
@@ -259,7 +265,7 @@ prodind_dyn_base.mod = repmat({'base'}, height(prodind_dyn_base), 1);
 prodind_dyn_base.t = (1:height(prodind_dyn_base))';
 prodind_dyn_base = stack(prodind_dyn_base, 1:(width(prodind_dyn_base)-2));
 
-% baseline
+% fc
 dynare cdc_pha_stable -Dprodind=2 nolog nopreprocessoroutput;
 dynare cdc_pha -DTFP=100 -Dprodind=2 nolog nopreprocessoroutput;
 prodind_dyn_fc = simuls(241:280, :);
@@ -267,7 +273,7 @@ prodind_dyn_fc.mod = repmat({'fc'}, height(prodind_dyn_fc), 1);
 prodind_dyn_fc.t = (1:height(prodind_dyn_fc))';
 prodind_dyn_fc = stack(prodind_dyn_fc, 1:(width(prodind_dyn_fc)-2));
 
-% baseline
+% as
 dynare cdc_pha_stable -Dprodind=3 nolog nopreprocessoroutput;
 dynare cdc_pha -DTFP=100 -Dprodind=3 nolog nopreprocessoroutput;
 prodind_dyn_as = simuls(241:280, :);
@@ -275,9 +281,17 @@ prodind_dyn_as.mod = repmat({'as'}, height(prodind_dyn_as), 1);
 prodind_dyn_as.t = (1:height(prodind_dyn_as))';
 prodind_dyn_as = stack(prodind_dyn_as, 1:(width(prodind_dyn_as)-2));
 
+% as+fc
+dynare cdc_pha_stable -Dprodind=4 nolog nopreprocessoroutput;
+dynare cdc_pha -DTFP=100 -Dprodind=4 nolog nopreprocessoroutput;
+prodind_dyn_bo = simuls(241:280, :);
+prodind_dyn_bo.mod = repmat({'bo'}, height(prodind_dyn_bo), 1);
+prodind_dyn_bo.t = (1:height(prodind_dyn_bo))';
+prodind_dyn_bo = stack(prodind_dyn_bo, 1:(width(prodind_dyn_bo)-2));
+
 
 % join all
-prodind_dyn = vertcat(prodind_dyn_base, prodind_dyn_fc, prodind_dyn_as);
+prodind_dyn = vertcat(prodind_dyn_base, prodind_dyn_fc, prodind_dyn_as,prodind_dyn_bo);
 prodind_dyn.Properties.VariableNames = {'mod', 'period', 'variable', 'value'};
 allsims.prodind_dyn = prodind_dyn;
 writetable(prodind_dyn, '../output/tr2_skill_dyn.csv');
